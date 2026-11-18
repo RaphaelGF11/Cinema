@@ -165,8 +165,15 @@ Les commandes flottantes utilisent des bordures décoratives de 0,75 px : 15 % d
 
 ### Insertion du panneau de détails et survol
 
-Depuis l’accueil, le panneau des séances et des informations entre horizontalement depuis la droite, avec une amplitude limitée à 40 px et un fondu de 360 ms. Au retour, le panneau se retire vers la droite en 240 ms, pendant la transformation existante du visuel. Le panneau réel et ses champs sont conservés et remis à leur place après la sortie, sans dupliquer le contenu. Le geste de retour continue de suivre le doigt. La réduction des animations désactive cette insertion.
+Depuis l’accueil, le panneau des séances et des informations entre horizontalement depuis la droite, depuis le bord de l’écran sur toute sa largeur en 440 ms, à opacité constante. Au retour, le panneau se retire vers la droite en 360 ms, pendant la transformation existante du visuel. Le panneau réel et ses champs sont conservés et remis à leur place après la sortie, sans dupliquer le contenu. Le geste de retour continue de suivre le doigt. La réduction des animations désactive cette insertion.
 
 Sur les appareils avec souris et survol, les boutons s’éclaircissent légèrement et se soulèvent de 1 px. La navigation et les commandes sur verre reçoivent un voile discret ; les horaires libres et les options du compte reçoivent une légère teinte rouge. Les boutons désactivés sont exclus. En mode de réduction des animations, le déplacement et les transitions sont supprimés.
 
 Les effets de survol apparaissent et disparaissent par un fondu de 220 ms. La couleur de fond, le contour, le texte, la luminosité et le léger déplacement partagent le même rythme. Ces transitions sont définies sur l’état de repos, y compris pour les boutons de navigation et le bouton « Voir plus », afin que le retrait de la souris soit également fluide.
+
+
+### Commande du son
+
+La barre de recherche contient un pictogramme de haut-parleur qui active ou coupe le son. Le son est coupé au chargement. Le choix est conservé entre les films et pendant la consultation de leurs détails. La commande ne modifie pas la pause ni la position de lecture ; le clic sur la vidéo reste la commande de lecture/pause.
+
+En mode immersif, le même bouton quitte la barre masquée et apparaît en bas à droite, au-dessus de la barre de lecture, avec une cible tactile de 44 px. Son état, son pictogramme et son libellé accessible restent synchronisés. En quittant ce mode, il revient dans la barre de recherche. Si le navigateur refuse une lecture automatique sonore, le lecteur reprend en muet et actualise la commande.

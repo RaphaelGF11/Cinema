@@ -94,7 +94,17 @@ html[data-reel-zoom] :is(.film-reel,#films,#tickets,#account) { touch-action:aut
 .reel-controls svg { flex:none; width:18px; height:18px; fill:currentColor; }
 .reel-controls .search-trigger { flex:1; min-width:0; justify-content:flex-start; padding-inline:12px; }
 .search-icon { fill:none !important; stroke:currentColor; stroke-width:1.8; flex:none; width:20px; height:20px; }
-#reel-toggle { padding:0; }
+#reel-sound { padding:0; color:inherit; background:transparent; border:0; }
+#reel-sound svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+#films.is-focused > #reel-sound {
+  position:absolute; z-index:4; right:18px; bottom:calc(56px + env(safe-area-inset-bottom));
+  display:grid; place-items:center; width:44px; height:44px; border-radius:50%;
+  color:#fff9eb; background:rgb(33 20 18 / 30%); border:.75px solid #fff9eb26;
+  backdrop-filter:blur(12px); box-shadow:0 4px 14px #140d0d26;
+}
+@media (prefers-reduced-transparency:reduce) {
+  #films.is-focused > #reel-sound { background:#2b201e; backdrop-filter:none; }
+}
 .app:has(#search:not([hidden])) { padding-bottom:env(safe-area-inset-bottom); }
 .app:has(#search:not([hidden])) > :is(header, .nav) { display:none; }
 .app:has(#detail:not([hidden]),#payment:not([hidden])) > .nav { display:none; }
@@ -905,9 +915,8 @@ html.is-shared-transition { view-transition-name:none; }
       <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="5.5"/><path d="m15 15 5 5"/></svg>
       Rechercher
     </button>
-    <button type="button" id="reel-toggle" aria-label="Mettre le défilement en pause">
-      <svg viewBox="0 0 24 24" aria-hidden="true" id="reel-pause"><path d="M8 5h3v14H8zm5 0h3v14h-3z"/></svg>
-      <svg viewBox="0 0 24 24" aria-hidden="true" id="reel-play" hidden><path d="m8 5 12 7-12 7z"/></svg>
+    <button type="button" id="reel-sound" aria-label="Activer le son" aria-pressed="false" title="Activer le son">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m11 4-5 4H3v8h3l5 4z"/><path id="reel-volume-on" d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14" hidden/><path id="reel-volume-off" d="m16 9 6 6m0-6-6 6"/></svg>
     </button>
   </div>
   <input type="range" class="reel-progress" id="reel-progress" aria-label="Position de lecture" min="0" max="1000" value="0" disabled>
@@ -1432,7 +1441,7 @@ const nextLoopSlide = cloneForLoop(slides[0]);
 reel.prepend(previousLoopSlide);
 reel.append(nextLoopSlide);
 const reelSlides = [previousLoopSlide, ...slides, nextLoopSlide];
-const reelToggle = document.querySelector('#reel-toggle');
+const reelSound = document.querySelector('#reel-sound');
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const searchView = document.querySelector('#search');
 const catalogSearch = document.querySelector('#catalog-search');
@@ -1447,6 +1456,7 @@ function saveSetting(key, value) {
 let autoplayEnabled = savedSetting('autoplay') !== 'off';
 function autoplayAllowed() { return autoplayEnabled && !reducedMotion.matches; }
 let playing = autoplayAllowed();
+let soundEnabled = false;
 
 let filmTransition;
 let queuedNavigation;
@@ -1599,10 +1609,13 @@ reelProgress.addEventListener('input', () => {
   updateReelProgress();
 });
 function renderPlaybackControls() {
-  reelToggle.hidden = !currentVideo;
-  reelToggle.setAttribute('aria-label', playing && !tapPausedVideo ? 'Mettre la vidéo en pause' : 'Relancer la vidéo');
-  document.querySelector('#reel-pause').toggleAttribute('hidden', !playing || Boolean(tapPausedVideo));
-  document.querySelector('#reel-play').toggleAttribute('hidden', playing && !tapPausedVideo);
+  reelSound.hidden = !currentVideo;
+  const label = soundEnabled ? 'Couper le son' : 'Activer le son';
+  reelSound.setAttribute('aria-label', label);
+  reelSound.setAttribute('aria-pressed', String(soundEnabled));
+  reelSound.title = label;
+  document.querySelector('#reel-volume-on').toggleAttribute('hidden', !soundEnabled);
+  document.querySelector('#reel-volume-off').toggleAttribute('hidden', soundEnabled);
 }
 function syncPlayback() {
   updateReelPlayback();
@@ -1639,14 +1652,21 @@ function updateReelPlayback() {
   }
   if (!next || !next.paused || playbackAttempt?.video === next) return;
   if (next.ended) next.currentTime = 0;
-  next.muted = true;
+  next.muted = !soundEnabled;
   const attempt = {video:next};
   playbackAttempt = attempt;
   next.play().then(() => {
     if (playbackAttempt === attempt) playbackAttempt = undefined;
-  }, () => {
+  }, error => {
     if (playbackAttempt !== attempt) return;
     playbackAttempt = undefined;
+    if (soundEnabled && error.name === 'NotAllowedError') {
+      soundEnabled = false;
+      next.muted = true;
+      renderPlaybackControls();
+      updateReelPlayback();
+      return;
+    }
     if (next === bookingMedia) {
       bookingWantsPlayback = false;
       updateReelPlayback();
@@ -1669,6 +1689,15 @@ function stopAmbience() {
 function setFilmFocus(focused) {
   films.classList.toggle('is-focused', focused);
   films.closest('.app').classList.toggle('is-film-focused', focused);
+  const parent = focused ? films : films.querySelector('.reel-controls');
+  if (reelSound.parentElement !== parent) {
+    const hadFocus = document.activeElement === reelSound;
+    if (parent.moveBefore) parent.moveBefore(reelSound, null);
+    else {
+      parent.append(reelSound);
+      if (hadFocus) reelSound.focus({preventScroll:true});
+    }
+  }
 }
 function syncAmbience(video) {
   if (ambienceVideo === video) return;
@@ -2187,10 +2216,12 @@ reelViewport?.addEventListener('resize', syncReelZoom);
 reel.addEventListener('focusin', updateReelPlayback);
 reel.addEventListener('focusout', () => setTimeout(updateReelPlayback, 0));
 document.addEventListener('visibilitychange', updateReelPlayback);
-reelToggle.addEventListener('click', () => {
-  playing = !playing || Boolean(tapPausedVideo);
-  tapPausedVideo = undefined;
-  syncPlayback();
+reelSound.addEventListener('click', event => {
+  event.stopPropagation();
+  clearPendingTap();
+  soundEnabled = !soundEnabled;
+  for (const video of reelVideos) video.muted = !soundEnabled;
+  renderPlaybackControls();
 });
 reducedMotion.addEventListener('change', () => {
   playing = autoplayAllowed();
@@ -2411,11 +2442,10 @@ function moveBetweenFilmViews(before, after, update, onComplete) {
 function insertDetailPanel() {
   const panel = detailView.querySelector('.detail-copy');
   if (reducedMotion.matches || !panel?.animate) return;
-  const distance = Math.min(40, innerWidth * .05);
   panel.animate([
-    {opacity:0, transform:`translateX(${distance}px)`},
-    {opacity:1, transform:'none'}
-  ], {duration:360, easing:'cubic-bezier(.22,1,.36,1)'});
+    {transform:'translateX(100%)'},
+    {transform:'none'}
+  ], {duration:440, easing:'cubic-bezier(.22,1,.36,1)'});
 }
 
 function withdrawDetailPanel() {
@@ -2452,9 +2482,9 @@ function withdrawDetailPanel() {
   };
   try {
     const motion = layer.animate([
-      {opacity:1, transform:'none'},
-      {opacity:0, transform:`translateX(${Math.min(40, innerWidth * .05)}px)`}
-    ], {duration:240, easing:'cubic-bezier(.4,0,1,1)', fill:'forwards'});
+      {transform:'none'},
+      {transform:`translateX(${rect.width}px)`}
+    ], {duration:360, easing:'cubic-bezier(.4,0,1,1)', fill:'forwards'});
     motion.finished.then(restore, restore);
   } catch {
     restore();
