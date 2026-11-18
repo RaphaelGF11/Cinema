@@ -1,0 +1,3047 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ciné Lumière — Version responsive</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=Instrument+Serif&display=swap" rel="stylesheet">
+<style>
+* { box-sizing:border-box }
+:root { color-scheme:dark; --bg:#171412; --panel:#292320; --ink:#fff9eb; --muted:#d8c9b6; --accent:#e63929; --on:#120c09; --line:#a18d7c; --glass:rgb(41 35 32 / 62%) }
+:root[data-theme="light"] { color-scheme:light; --bg:#fff9eb; --panel:#f5ebd7; --ink:#241714; --muted:#65483d; --accent:#b51c18; --on:#fff; --line:#8d695c; --glass:rgb(245 235 215 / 70%) }
+body { margin:0; background:#100d0c; color:var(--ink); font:16px/1.45 "DM Sans",system-ui,sans-serif }
+.app { --header-height:calc(68px + env(safe-area-inset-top)); --nav-clearance:calc(92px + env(safe-area-inset-bottom)); position:relative; width:100%; min-height:100svh; margin:auto; padding-bottom:var(--nav-clearance); background:var(--bg) }
+.app:has(#films:not([hidden])) { padding-bottom:0; }
+header {
+  position:sticky; z-index:3; top:0; isolation:isolate;
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  min-height:var(--header-height);
+  padding:calc(10px + env(safe-area-inset-top)) 18px 10px;
+  color:var(--ink); background:var(--panel);
+  border-bottom:1px solid var(--line);
+}
+.app:has(#films:not([hidden])) header {
+  position:absolute; inset:0 0 auto;
+  color:#fff9eb;
+  background:linear-gradient(180deg,rgb(20 12 12 / 96%),rgb(27 16 16 / 82%) 65%,transparent);
+  border-bottom-color:transparent;
+}
+@supports (backdrop-filter:blur(12px)) {
+  header {
+    background:linear-gradient(180deg,var(--panel),var(--glass));
+    backdrop-filter:blur(12px) saturate(140%);
+  }
+  .app:has(#films:not([hidden])) header { background:transparent; backdrop-filter:none; }
+  .app:has(#films:not([hidden])) header::before {
+    content:""; position:absolute; inset:0; z-index:-1; pointer-events:none;
+    backdrop-filter:blur(12px) saturate(140%);
+    background:linear-gradient(180deg,rgb(20 12 12 / 88%),rgb(45 23 21 / 48%) 65%,transparent);
+    mask-image:linear-gradient(#000 78%,transparent);
+  }
+}
+@media (prefers-reduced-transparency:reduce) {
+  header,.app:has(#films:not([hidden])) header {
+    color:var(--ink); background:var(--panel); backdrop-filter:none; mask-image:none;
+    border-bottom-color:var(--line);
+  }
+  .app:has(#films:not([hidden])) header::before { display:none; }
+}
+.brand { text-transform:uppercase; letter-spacing:.11em; font-size:clamp(20px,5.5vw,26px); font-weight:700 }
+button { min-width:44px; min-height:44px; padding:8px 14px; border:1px solid var(--line); border-radius:99px; background:var(--panel); color:var(--ink); font:inherit; cursor:pointer }
+button:disabled { cursor:default }
+button:focus-visible, [tabindex="-1"]:focus-visible { outline:3px solid currentColor; outline-offset:3px }
+[hidden] { display:none !important }
+h1,h2 { font:400 clamp(42px,11vw,64px)/.96 "Instrument Serif",Georgia,serif; margin:0 0 12px }
+p { margin:8px 0 }
+small { font-size:14px }
+.muted { color:var(--muted) }
+#films { position:relative; }
+.film-reel {
+  height:100vh; height:100dvh;
+  overflow:hidden; touch-action:pinch-zoom; overscroll-behavior:contain;
+  overflow-anchor:none; scrollbar-width:none;
+}
+@media (hover:none) and (pointer:coarse) {
+  .film-reel { height:100svh; }
+}
+html[data-reel-zoom] :is(.film-reel,#films,#tickets,#account) { touch-action:auto; }
+.film-reel::-webkit-scrollbar { display:none; }
+@media (pointer:fine) { .film-reel { cursor:grab; } }
+.film-reel.is-dragging { cursor:grabbing; user-select:none; }
+.reel-controls {
+  position:absolute; z-index:2; top:calc(var(--header-height) + 12px); inset-inline:18px;
+  display:flex; align-items:center; gap:4px; padding:3px 5px;
+  color:#fff9eb; background:#2b201e; border:1px solid #fff9eb55;
+  border-top-color:#fff9eba8; border-radius:99px;
+  box-shadow:0 6px 18px #140d0d45;
+  font-size:14px; font-variant-numeric:tabular-nums;
+}
+@supports (backdrop-filter:blur(12px)) {
+  .reel-controls {
+    background:linear-gradient(155deg,#fff1e729,transparent 62%),rgb(33 20 18 / 52%);
+    backdrop-filter:blur(12px) saturate(140%);
+  }
+}
+@media (prefers-reduced-transparency:reduce) {
+  .reel-controls { background:#2b201e; backdrop-filter:none; }
+}
+.reel-controls button {
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  color:inherit; background:transparent; border:0; font:inherit;
+}
+.reel-controls button:active { background:#fff9eb25; }
+.reel-controls svg { flex:none; width:18px; height:18px; fill:currentColor; }
+.reel-controls .search-trigger { flex:1; min-width:0; justify-content:flex-start; padding-inline:12px; }
+.search-icon { fill:none !important; stroke:currentColor; stroke-width:1.8; flex:none; width:20px; height:20px; }
+#reel-toggle { padding:0; }
+.app:has(#search:not([hidden])) { padding-bottom:env(safe-area-inset-bottom); }
+.app:has(#search:not([hidden])) > :is(header, .nav) { display:none; }
+.app:has(#detail:not([hidden]),#payment:not([hidden])) > .nav { display:none; }
+.app:has(#detail:not([hidden])) { padding-bottom:env(safe-area-inset-bottom); }
+#films { touch-action:pinch-zoom; }
+#tickets,#account { touch-action:pan-y pinch-zoom; }
+:is(#search,#settings,.detail-cover,.detail-notes,.screening-head,.screening-label,.screening-arrow,
+    .booking-heading,.seat-picker-head,.booking-summary) { touch-action:pan-y pinch-zoom; }
+:is(#tickets,#account) { min-height:calc(100svh - var(--header-height) - var(--nav-clearance)); }
+#search {
+  position:relative; isolation:isolate; min-height:100dvh;
+  padding-top:calc(18px + env(safe-area-inset-top)); background:var(--panel);
+}
+@supports (backdrop-filter:blur(24px)) {
+  #search { background:transparent; }
+  #search::before,#search::after {
+    content:""; position:absolute; inset:0; pointer-events:none;
+  }
+  #search::before { z-index:-2; background:var(--search-cover) center / cover; }
+  #search::after {
+    z-index:-1; backdrop-filter:blur(28px) saturate(135%);
+    background:linear-gradient(160deg,var(--glass),color-mix(in srgb,var(--panel) 88%,transparent));
+  }
+}
+@media (prefers-reduced-transparency:reduce) {
+  #search { background:var(--panel); }
+  #search::before,#search::after { display:none; }
+}
+.film-image-motion {
+  position:fixed; z-index:1; pointer-events:none;
+  background-color:#211412; background-size:cover; background-repeat:no-repeat;
+}
+.film-image-target { background-image:none !important; }
+.film-image-target > * { position:relative; z-index:2; }
+.film-image-target::before {
+  content:""; position:absolute; inset:0; z-index:2; pointer-events:none;
+  background:var(--film-shade);
+}
+.hero,.detail-cover { position:relative; }
+
+.search-heading { display:flex; align-items:center; gap:12px; margin-bottom:20px; }
+.search-heading h2 { margin:0; }
+.search-back { display:grid; place-items:center; flex:none; padding:0; }
+.search-back svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.search-field {
+  display:flex; align-items:center; gap:10px; padding-inline:14px;
+  border:1px solid var(--line); border-radius:16px; background:var(--panel);
+}
+.search-field:focus-within { outline:2px solid var(--ink); outline-offset:2px; }
+.search-field input { min-width:0; width:100%; min-height:52px; border:0; outline:0; background:transparent; color:inherit; font:inherit; }
+.search-field input::placeholder { color:var(--muted); }
+.search-results ul { list-style:none; margin:16px 0 0; padding:0; display:grid; gap:8px; }
+.catalog-choice {
+  display:flex; align-items:center; gap:12px; width:100%; padding:8px;
+  border-radius:16px; text-align:left;
+}
+.catalog-choice img { width:48px; height:72px; object-fit:contain; border-radius:8px; flex:none; }
+.catalog-choice small { display:block; color:var(--muted); }
+.hero {
+  display:flex; flex-direction:column; justify-content:flex-end; align-items:flex-start;
+  min-height:100%;
+  --hero-gutter:24px;
+  padding:calc(var(--header-height) + 76px) var(--hero-gutter) var(--nav-clearance);
+  color:#fff9eb;
+  --film-shade:linear-gradient(0deg,rgb(17 13 13 / 88%),rgb(17 13 13 / 84%) 20%,rgb(17 13 13 / 30%) 48%,transparent 65%);
+  background-color:#211412;
+  background-image:var(--film-shade),
+    var(--cover, url("les-heures-bleues.webp"));
+  background-size:cover; background-position:68% center;
+}
+.hero .film-more { width:100%; min-height:54px; margin-top:16px; }
+.hero.has-video { overflow:hidden; container-type:inline-size; }
+.hero-video {
+  position:absolute; z-index:0; inset:1% 0 auto; width:100%; height:84%;
+  object-fit:cover; pointer-events:none; opacity:0;
+  transition:height 380ms cubic-bezier(.22,1,.36,1),
+    top 380ms cubic-bezier(.22,1,.36,1), translate 380ms cubic-bezier(.22,1,.36,1);
+}
+.video-ambience {
+  position:absolute; z-index:0; inset:0; width:100%; height:100%;
+  object-fit:cover; filter:blur(28px) brightness(.68); transform:scale(1.14);
+  pointer-events:none;
+}
+#films.is-focused .hero-video {
+  top:50%; translate:0 -50%;
+  height:min(100%, calc(100cqw + 2 * var(--hero-gutter)));
+}
+.hero-video[data-ready] { opacity:1; }
+.film-overlay {
+  --poster-width:clamp(90px,19svh,164px);
+  width:100%; isolation:isolate; color:var(--ink);
+  --overlay-rgb:23 20 18;
+}
+:root[data-theme="light"] .film-overlay { --overlay-rgb:255 249 235; }
+.film-poster {
+  display:block; pointer-events:none; user-select:none; -webkit-user-drag:none; width:var(--poster-width); aspect-ratio:2 / 3; margin-bottom:18px;
+  object-fit:contain;
+  border:1px solid #d7c6bd; border-radius:10px;
+  background:#211412;
+  box-shadow:0 9px 24px rgb(40 24 18 / 18%);
+}
+@media (max-height:700px) {
+  .film-overlay { --poster-width:clamp(76px,15svh,104px); }
+  .film-poster { margin-bottom:10px; }
+  .hero .film-summary {
+    display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden;
+  }
+  .hero .film-more { margin-top:10px; }
+}
+.film-overlay::before,.film-overlay::after {
+  content:""; position:absolute; z-index:-1; pointer-events:none;
+  inset:14% 0 0;
+}
+.film-overlay::after {
+  background:linear-gradient(to bottom,
+    transparent 0,
+    rgb(var(--overlay-rgb) / 10%) 20%,
+    rgb(var(--overlay-rgb) / 38%) 40%,
+    rgb(var(--overlay-rgb) / 76%) 59%,
+    rgb(var(--overlay-rgb) / 88%) 82%,
+    rgb(var(--overlay-rgb) / 92%) 100%);
+}
+@supports (backdrop-filter:blur(12px)) {
+  .film-overlay::before {
+    backdrop-filter:blur(12px) saturate(124%);
+    mask-image:linear-gradient(to bottom,transparent 0,rgb(0 0 0 / 32%) 30%,#000 64%);
+  }
+}
+@media (prefers-reduced-transparency:reduce) {
+  .film-overlay::before { display:none; }
+}
+.hero.has-video > .film-overlay { z-index:1; }
+.hero.film-image-target .hero-video { visibility:hidden; }
+.app.is-film-focused:has(#films:not([hidden])) > :is(header,.nav),
+#films.is-focused .reel-controls,
+#films.is-focused .hero > :not(.hero-video,.video-ambience) {
+  opacity:0; visibility:hidden; pointer-events:none;
+}
+:is(.app > header,.app > .nav,.reel-controls,.hero.has-video > :not(.hero-video,.video-ambience)) {
+  transition:opacity 180ms ease,visibility 180ms;
+}
+.reel-progress {
+  --progress:0%;
+  display:none; position:absolute; z-index:4; inset-inline:18px;
+  bottom:calc(env(safe-area-inset-bottom) + 12px);
+  width:calc(100% - 36px); height:32px; margin:0;
+  appearance:none; border:0; outline:0; background:transparent; cursor:pointer; touch-action:none;
+}
+#films.is-focused .reel-progress { display:block; }
+.reel-progress::-webkit-slider-runnable-track {
+  height:2px; border-radius:2px;
+  background:linear-gradient(to right,#fff9eb var(--progress),#fff9eb66 var(--progress));
+}
+.reel-progress::-moz-range-track { height:2px; background:#fff9eb66; }
+.reel-progress::-moz-range-progress { height:2px; background:#fff9eb; }
+.reel-progress::-webkit-slider-thumb {
+  appearance:none; width:10px; height:10px; margin-top:-4px;
+  border:0; border-radius:50%; background:#fff9eb; box-shadow:0 0 0 1px #17141270;
+}
+.reel-progress::-moz-range-thumb {
+  width:10px; height:10px; border:0; border-radius:50%; background:#fff9eb;
+}
+.reel-progress:focus-visible::-webkit-slider-thumb { box-shadow:0 0 0 3px #fff9eb80; }
+.reel-progress:focus-visible::-moz-range-thumb { box-shadow:0 0 0 3px #fff9eb80; }
+.scroll-hint {
+  position:absolute; z-index:4; left:50%; top:50%; translate:-50% -50%;
+  display:flex; flex-direction:column; align-items:center; gap:5px;
+  width:min(280px,calc(100% - 48px)); padding:14px 16px 18px; border-radius:24px;
+  color:#fff9eb;
+  background:linear-gradient(155deg,rgb(255 249 235 / 18%),rgb(255 249 235 / 3%) 40%,rgb(26 17 17 / 12%) 67%,rgb(26 17 17 / 38%));
+  -webkit-backdrop-filter:blur(16px) saturate(145%);
+  backdrop-filter:blur(16px) saturate(145%);
+  border:1px solid rgb(255 249 235 / 23%);
+  border-top-color:rgb(255 249 235 / 55%);
+  box-shadow:inset 0 1px 0 rgb(255 255 255 / 15%),0 12px 36px rgb(0 0 0 / 18%);
+  text-shadow:0 1px 5px rgb(0 0 0 / 65%);
+  text-align:center; pointer-events:none;
+  animation:gesture-arrive 250ms ease-out both;
+}
+.scroll-hint strong { font-size:17px; }
+.scroll-hint small { color:#e5d4c7; font-size:13px; }
+.gesture-demo { position:relative; width:92px; height:90px; display:grid; place-items:center; }
+.gesture-demo svg { width:42px; height:50px; fill:#fff9eb; stroke:#251917; stroke-width:1.3; stroke-linejoin:round; }
+.gesture-ripple { position:absolute; width:38px; height:38px; top:14px; left:27px; border:2px solid #fff9eb; border-radius:50%; opacity:0; }
+.gesture-trail { display:none; position:absolute; width:4px; height:62px; border-radius:9px; background:linear-gradient(0deg,#fff9eb11,#fff9eba8); }
+.scroll-hint[data-gesture="tap"] svg { animation:gesture-double-tap 2.4s ease-in-out infinite; }
+.scroll-hint[data-gesture="tap"] .gesture-ripple { animation:gesture-tap-ring 2.4s ease-out infinite; }
+.scroll-hint[data-gesture="swipe"] svg { animation:gesture-swipe 2.2s ease-in-out infinite; }
+.scroll-hint[data-gesture="swipe"] .gesture-trail { display:block; }
+@keyframes gesture-arrive { from { opacity:0; } to { opacity:1; } }
+@keyframes gesture-double-tap { 0%,10%,30%,50%,100% { transform:scale(1); } 20%,40% { transform:scale(.83) translateY(3px); } }
+@keyframes gesture-tap-ring { 0%,12%,32%,55%,100% { opacity:0; transform:scale(.5); } 18%,38% { opacity:.9; transform:scale(.8); } 29%,49% { opacity:0; transform:scale(1.65); } }
+@keyframes gesture-swipe { 0% { opacity:0; transform:translateY(26px); } 18% { opacity:1; transform:translateY(26px); } 70% { opacity:1; transform:translateY(-26px); } 90%,100% { opacity:0; transform:translateY(-26px); } }
+@media (prefers-reduced-motion:reduce) {
+  .scroll-hint, .scroll-hint .gesture-demo svg, .scroll-hint .gesture-ripple { animation:none; }
+}
+@media (prefers-reduced-motion:reduce) { .hero-video { transition:none; } }
+.playback-feedback {
+  position:absolute; z-index:5; left:50%; top:50%; translate:-50% -50%;
+  display:grid; place-items:center; width:76px; height:76px; border-radius:50%;
+  background:#171412ab; border:1px solid #fff9eb80; color:#fff9eb;
+  pointer-events:none;
+}
+.playback-feedback svg { width:34px; height:34px; fill:currentColor; }
+@media (prefers-reduced-motion:reduce) {
+  :is(.app > header,.app > .nav,.reel-controls,.hero.has-video > :not(.hero-video,.video-ambience)) {
+    transition:none;
+  }
+}
+.hero :focus-visible { outline-color:#fff9eb; }
+.hero h1,.hero h2 { max-width:15ch; font-size:clamp(34px,8vw,46px); line-height:1.02; }
+.hero p { max-width:30ch }
+@media (max-width:360px) {
+  .hero { --hero-gutter:16px; }
+  .hero h1,.hero h2 { font-size:clamp(26px,9vw,34px); overflow-wrap:anywhere; }
+  .reel-controls { inset-inline:12px; }
+}
+@media (max-width:360px) and (max-height:620px) {
+  .film-overlay { --poster-width:72px; }
+  .hero h1,.hero h2 { margin-bottom:8px; }
+  .hero .film-more { min-height:48px; }
+}
+@media (max-height:540px) {
+  .film-overlay { --poster-width:65px; }
+  .hero .film-summary { display:none; }
+}
+@media (max-height:430px) {
+  .hero .film-poster { display:none; }
+  .hero h1,.hero h2 { font-size:clamp(24px,7vw,34px); }
+}
+.eyebrow { text-transform:uppercase; letter-spacing:.12em; font-size:14px; font-weight:700 }
+.primary, button[aria-pressed="true"] { background:var(--accent); color:var(--on); border-color:var(--accent); font-weight:700 }
+.primary:disabled { background:var(--panel); color:var(--muted); border-color:var(--line) }
+
+#detail { container-type:inline-size; }
+.app:has(#detail:not([hidden])) { padding-bottom:env(safe-area-inset-bottom); }
+.detail-cover {
+  display:flex; align-items:flex-end;
+  min-height:clamp(330px,48svh,500px);
+  padding:calc(var(--header-height) + 24px) 0 0;
+  background:#211412 var(--detail-cover) center 44% / cover no-repeat;
+}
+.app:has(#detail:not([hidden])) header {
+  margin-bottom:calc(-1 * var(--header-height)); color:#fff9eb;
+  background:linear-gradient(180deg,#171412ed,#17141270);
+  border-bottom-color:#fff9eb42;
+}
+.page-back { display:inline-flex; align-items:center; gap:8px; }
+header:has(.page-back:not([hidden])) .brand { display:none; }
+.app:has(#detail:not([hidden])) .page-back { color:inherit; background:#21141266; border-color:#fff9eb77; }
+.page-back svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.detail-cover > .detail-video {
+  inset:0; width:100%; height:100%; object-position:center 44%; transition:none;
+}
+.detail-poster {
+  display:block; width:100%; aspect-ratio:2 / 3;
+  object-fit:contain; border-radius:12px; background:#211412;
+  border:1px solid #fff9eb70; box-shadow:0 8px 30px #0906059e;
+}
+.detail-heading {
+  position:relative; isolation:isolate;
+  display:grid; grid-template-columns:clamp(70px,23cqw,114px) minmax(0,1fr);
+  align-items:end; gap:clamp(12px,4cqw,22px);
+  width:100%; padding:24px clamp(16px,5cqw,32px) 28px;
+  color:#fff9eb;
+}
+.detail-heading::before {
+  content:""; position:absolute; inset:-64px 0 0; z-index:-1; pointer-events:none;
+  background:linear-gradient(0deg,#171412 0%,#171412f0 27%,#171412d9 58%,#17141288 79%,transparent);
+}
+.detail-heading h2 {
+  margin:0; max-width:19ch; font-size:clamp(34px,10cqw,68px); line-height:.97;
+  letter-spacing:-.022em; overflow-wrap:anywhere; text-wrap:balance;
+}
+.detail-heading .eyebrow {
+  color:#ffe2d5; margin:0 0 8px; font-size:12px; letter-spacing:.09em;
+}
+@supports (backdrop-filter:blur(12px)) {
+  .app:has(#detail:not([hidden])) header {
+    background:linear-gradient(155deg,#3a2422b5,#17141265);
+    backdrop-filter:blur(12px) saturate(140%);
+  }
+  .detail-heading::before {
+    backdrop-filter:blur(12px) saturate(124%);
+    mask-image:linear-gradient(0deg,#000 61%,transparent);
+  }
+}
+@media (prefers-reduced-transparency:reduce) {
+  .app:has(#detail:not([hidden])) header,.detail-heading { background:#292320; backdrop-filter:none; }
+  .detail-heading::before { display:none; }
+}
+@media (prefers-reduced-motion:no-preference) {
+  html.theme-changing :is(.app,header,button,.nav,.panel,.detail-copy),
+  html.theme-changing .nav::before {
+    transition:background-color 300ms ease,color 300ms ease,border-color 300ms ease,box-shadow 300ms ease;
+  }
+  html.theme-crossfade::view-transition-group(root) { animation-duration:300ms; }
+}
+.detail-copy {
+  position:relative; padding:0 clamp(16px,5cqw,32px) 36px;
+  background:var(--bg);
+}
+.detail-copy::before {
+  content:""; position:absolute; inset:0 0 auto; height:1px; pointer-events:none;
+  background:linear-gradient(90deg,transparent,var(--line),transparent);
+}
+.detail-copy h3 {
+  margin:0 0 10px; color:var(--ink);
+  font:400 clamp(30px,8cqw,42px)/1 "Instrument Serif",Georgia,serif;
+}
+#detail-booking {
+  position:relative; top:-1px; overflow:hidden;
+  margin-bottom:26px; padding:16px 0 14px;
+  border:1px solid color-mix(in srgb,var(--line) 72%,transparent);
+  border-top-color:color-mix(in srgb,var(--accent) 74%,var(--line));
+  border-radius:22px;
+  background:linear-gradient(155deg,color-mix(in srgb,var(--accent) 8%,transparent),transparent 68%),var(--panel);
+}
+.screening-head { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px 12px; padding-inline:14px; }
+.screening-head h3 { margin:0; }
+.screening-head p { margin:0; font-size:14px; font-variant-numeric:tabular-nums; }
+.screening-head p strong { color:var(--ink); }
+.screening-label {
+  margin:15px 14px 3px; font-size:13px; font-weight:700;
+  letter-spacing:.07em; text-transform:uppercase;
+}
+.screening-row { position:relative; }
+.screening-track {
+  display:flex; gap:8px; overflow-x:auto; padding:5px 14px;
+  scroll-padding-inline:14px; scroll-snap-type:x proximity; overscroll-behavior-x:contain; scrollbar-width:none;
+}
+.screening-track::-webkit-scrollbar { display:none; }
+.screening-track > button { flex:none; scroll-snap-align:start; white-space:nowrap; }
+.screening-arrow {
+  position:absolute; z-index:1; inset-block-start:50%; translate:0 -50%;
+  font-size:26px; line-height:1; padding:0; background:var(--panel);
+  box-shadow:0 4px 14px #100d0c59;
+}
+.screening-arrow:first-child { inset-inline-start:4px; }
+.screening-arrow:last-child { inset-inline-end:4px; }
+@supports (backdrop-filter:blur(10px)) {
+  .screening-arrow { background:color-mix(in srgb,var(--panel) 85%,transparent); backdrop-filter:blur(10px); }
+}
+@media (prefers-reduced-transparency:reduce) {
+  .screening-arrow { background:var(--panel); backdrop-filter:none; }
+}
+.screening-arrow:disabled { visibility:hidden; }
+.screening-day {
+  display:grid; align-content:center; gap:2px; min-width:72px; min-height:61px;
+  padding:7px 10px; border-radius:12px; background:var(--bg); font-size:13px;
+}
+.screening-day strong { font-size:16px; }
+.screening-day[aria-pressed="true"] { border-color:var(--accent); background:var(--accent); color:var(--on); }
+#detail-booking .session {
+  min-width:104px; padding:8px 12px; border-radius:12px; text-align:left;
+  background:var(--bg); font-size:19px; font-weight:700; font-variant-numeric:tabular-nums;
+}
+#detail-booking .session small { font-weight:400; font-size:13px; color:var(--muted); }
+#detail-booking .session:not(:disabled) { border-color:color-mix(in srgb,var(--accent) 70%,var(--line)); }
+#detail-booking .session:not(:disabled):is(:active,:focus-visible) { background:var(--accent); color:var(--on); }
+#detail-booking .session:not(:disabled):active small { color:inherit; }
+#detail-booking .session:not(:disabled):focus-visible small { color:inherit; }
+#detail-booking .session[aria-pressed="true"] { background:var(--accent); color:var(--on); border-color:var(--accent); }
+#detail-booking .session[aria-pressed="true"] small { color:inherit; }
+#detail-booking .session:disabled { border-style:dashed; color:var(--muted); }
+.screening-date { color:var(--muted); font-weight:400; margin-inline-start:4px; letter-spacing:0; text-transform:none; }
+.film-reviews { margin:24px 0; padding:20px 16px; border:1px solid var(--line); border-radius:22px; background:var(--panel); touch-action:pan-y pinch-zoom; }
+.reviews-heading { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:8px; }
+.reviews-heading h3 { margin:0; }
+#reviews-summary { margin:0; font-size:14px; }
+.reviews-local { font-size:13px; margin:8px 0 18px; }
+.film-rating { font-size:14px; font-weight:600; margin:8px 0; }
+.film-rating { display:flex; align-items:center; flex-wrap:wrap; gap:4px 12px; }
+.tomatometer { white-space:nowrap; }
+.detail-rating { color:#fff9eb; font-size:12px; margin:12px 0 0; }
+.detail-rating a { color:inherit; text-decoration:none; min-height:44px; display:inline-flex; align-items:center; }
+.reservation-bar {
+  position:fixed; z-index:5; bottom:0; left:50%; translate:-50% 0;
+  width:min(100%,480px); padding:14px 18px calc(14px + env(safe-area-inset-bottom));
+  color:var(--ink); background:linear-gradient(155deg,var(--glass),var(--panel));
+  backdrop-filter:blur(20px) saturate(140%); border-top:1px solid var(--line);
+  box-shadow:0 -8px 30px #100d0c30;
+}
+#reservation-summary { font-size:14px; margin:0 0 10px; }
+#reserve-session { width:100%; min-height:50px; display:flex; align-items:center; justify-content:center; gap:10px; }
+.reservation-hint { text-align:center; font-size:13px; margin:8px 0 0; }
+.reservation-hint span { display:inline-block; animation:reserve-nudge 1.4s ease-in-out 4; }
+@keyframes reserve-nudge { 0%,100% { transform:translateY(2px); } 50% { transform:translateY(-3px); } }
+#detail.has-reservation { padding-bottom:calc(170px + env(safe-area-inset-bottom)); }
+#cancel-confirmation {
+  width:min(420px,calc(100% - 32px)); padding:24px; border:1px solid var(--line);
+  border-radius:24px; background:var(--panel); color:var(--ink);
+  box-shadow:0 20px 60px #0005;
+}
+#cancel-confirmation::backdrop { background:#100d0c80; backdrop-filter:blur(6px); }
+#cancel-title { font-size:36px; }
+.cancel-actions { display:flex; flex-direction:column; gap:10px; margin-top:22px; }
+#payment { min-height:calc(100svh - var(--header-height)); padding:24px 22px 36px; touch-action:pan-y pinch-zoom; }
+.app:has(#payment:not([hidden])) { padding-bottom:0; }
+.payment-recap { display:flex; align-items:center; gap:18px; margin:28px 0; }
+.payment-recap img { width:86px; aspect-ratio:2/3; object-fit:contain; border-radius:12px; border:1px solid var(--line); }
+.payment-recap > div { min-width:0; }
+.payment-recap h3 { font:400 30px/1.1 "Instrument Serif",Georgia,serif; margin:0 0 10px; overflow-wrap:anywhere; }
+.payment-recap p { font-size:14px; margin:0; }
+.payment-details { margin:0; padding:20px; background:var(--panel); border:1px solid var(--line); border-radius:22px; }
+.payment-details > div,.apple-pay-recap > div { display:flex; justify-content:space-between; gap:18px; margin-bottom:16px; }
+.payment-details dt { color:var(--muted); }
+.payment-details dd { margin:0; text-align:right; overflow-wrap:anywhere; min-width:0; }
+.payment-details .payment-total { margin:18px 0 0; padding-top:18px; border-top:1px solid var(--line); font-size:22px; font-weight:700; }
+.payment-total dt { color:var(--ink); }
+.payment-method { margin-top:32px; }
+.payment-method h3 { font-size:17px; margin-bottom:16px; }
+.apple-pay-button { width:100%; min-height:54px; background:#080808; color:#fff; border:1px solid #bbb; border-radius:14px; font-size:18px; }
+.apple-pay-button:disabled { color:#ccc; }
+#apple-pay { display:flex; align-items:center; justify-content:center; gap:4px; }
+#apple-pay .apple-mark { width:19px; height:23px; margin-left:5px; }
+.payment-demo { font-size:13px; text-align:center; margin:12px 0 0; }
+#apple-pay-sheet {
+  --wallet-bg:#f5f5f7; --wallet-ink:#151517; --wallet-muted:#6e6e73; --wallet-line:#d2d2d7; --wallet-blue:#007aff;
+  position:fixed; inset:auto 0 0; margin:0 auto; width:min(100%,480px); max-width:100%; max-height:94dvh;
+  overflow:auto; padding:9px 22px calc(28px + env(safe-area-inset-bottom)); border:0; border-radius:28px 28px 0 0;
+  color:var(--wallet-ink); background:var(--wallet-bg); box-shadow:0 -10px 70px #0005;
+  font:16px/1.35 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+}
+#apple-pay-sheet[open] { animation:payment-sheet-enter 420ms cubic-bezier(.16,1,.3,1) both; }
+#apple-pay-sheet::backdrop { background:#0006; backdrop-filter:blur(5px); }
+.wallet-grabber { width:36px; height:5px; border-radius:3px; background:#c5c5c9; margin:0 auto 20px; }
+.apple-pay-heading { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.apple-pay-heading h2 { display:flex; align-items:center; gap:2px; font:500 31px/1 -apple-system,BlinkMacSystemFont,Arial,sans-serif; letter-spacing:-1.2px; margin:0; }
+.apple-mark { width:26px; height:30px; fill:currentColor; }
+.apple-pay-heading button { border:0; border-radius:50%; width:32px; min-width:44px; height:44px; color:#757579; background:transparent; font:500 27px/1 Arial,sans-serif; padding:0; }
+#apple-pay-demo { font-size:11px; margin:3px 0 18px; color:var(--wallet-muted); }
+.wallet-card-row { display:flex; align-items:center; gap:14px; padding:16px 0 22px; }
+.wallet-card-art { position:relative; flex:none; width:84px; height:53px; border-radius:7px; padding:7px; color:#fff; background:linear-gradient(135deg,#30323a,#0d0e13); box-shadow:0 2px 7px #0003; display:flex; flex-direction:column; justify-content:space-between; font-size:8px; letter-spacing:1px; }
+.wallet-card-digits { font-size:7px; letter-spacing:.5px; }
+.wallet-card-art i { position:absolute; right:8px; bottom:7px; width:12px; height:12px; background:#eb001b; border-radius:50%; }
+.wallet-card-art i::after { content:""; position:absolute; left:7px; width:12px; height:12px; background:#f79e1bcc; border-radius:50%; }
+.wallet-card-copy { display:flex; flex-direction:column; gap:4px; font-size:16px; }
+.wallet-card-copy strong { font-weight:600; }
+.wallet-card-copy span { color:var(--wallet-muted); font-size:14px; }
+.wallet-selected { margin-left:auto; width:23px; height:23px; display:grid; place-items:center; color:#fff; background:var(--wallet-blue); border-radius:50%; font-size:15px; }
+.wallet-info-row { display:flex; gap:14px; padding:14px 0; border-top:1px solid var(--wallet-line); }
+.wallet-info-row > span { width:76px; flex:none; color:var(--wallet-muted); font-size:11px; padding-top:3px; letter-spacing:.4px; }
+.wallet-info-row strong { font-size:14px; font-weight:400; overflow-wrap:anywhere; min-width:0; }
+.wallet-amount { display:flex; flex-direction:column; align-items:flex-end; gap:4px; padding:22px 0 12px; border-top:1px solid var(--wallet-line); }
+.wallet-amount > span { font-size:11px; color:var(--wallet-muted); letter-spacing:.5px; }
+.wallet-amount > strong { font-weight:500; font-size:34px; letter-spacing:-1px; }
+.wallet-auth { display:flex; flex-direction:column; align-items:center; padding:16px 0 0; min-height:152px; }
+#apple-pay-confirm { display:flex; flex-direction:column; align-items:center; gap:11px; border:0; padding:0 12px; min-height:100px; width:100%; background:transparent; color:var(--wallet-blue); border-radius:14px; font:400 14px/1.3 -apple-system,BlinkMacSystemFont,Arial,sans-serif; }
+#apple-pay-confirm:disabled { opacity:1; }
+.wallet-face { position:relative; display:block; width:58px; height:58px; }
+.wallet-face svg { position:absolute; inset:0; width:58px; height:58px; fill:none; stroke:currentColor; stroke-width:2.8; stroke-linecap:round; stroke-linejoin:round; }
+.wallet-check { opacity:0; }
+.wallet-spinner { position:absolute; inset:6px; border:3px solid #007aff22; border-top-color:var(--wallet-blue); border-radius:50%; opacity:0; }
+.wallet-scan { position:absolute; inset:10px 8px auto; height:2px; background:var(--wallet-blue); box-shadow:0 0 10px #007aff80; opacity:0; }
+#apple-pay-feedback { max-width:34ch; color:var(--wallet-muted); text-align:center; margin:6px 0 0; font-size:11px; min-height:15px; }
+.wallet-side-button { position:absolute; right:0; top:50%; width:8px; min-width:8px; height:74px; border-radius:6px 0 0 6px; border:0; padding:0; color:var(--wallet-blue); background:#007aff33; }
+.wallet-side-button span { position:absolute; right:14px; top:23px; font-size:22px; letter-spacing:-5px; animation:wallet-side-pulse 1.8s ease-in-out infinite; }
+#apple-pay-sheet[data-state="scanning"] .face-id-icon { animation:wallet-face-pulse .55s ease-in-out infinite alternate; }
+#apple-pay-sheet[data-state="scanning"] .wallet-scan { opacity:1; animation:wallet-scan 850ms ease-in-out infinite alternate; }
+#apple-pay-sheet[data-state="processing"] .face-id-icon { opacity:0; transition:opacity 150ms; }
+#apple-pay-sheet[data-state="processing"] .wallet-spinner { opacity:1; animation:wallet-spin .75s linear infinite; }
+#apple-pay-sheet[data-state="success"] .face-id-icon { opacity:0; }
+#apple-pay-sheet[data-state="success"] .wallet-check { opacity:1; stroke:#30b45b; }
+#apple-pay-sheet[data-state="success"] .wallet-check path { stroke-dasharray:40; animation:wallet-check-draw 350ms ease-out both; }
+#apple-pay-sheet[data-state="success"] .wallet-check circle { animation:wallet-success .4s cubic-bezier(.2,1.6,.5,1) both; transform-origin:center; }
+#apple-pay-sheet[data-state="declined"] .wallet-face { animation:wallet-shake .35s ease-in-out; }
+#apple-pay-sheet[data-state="declined"] #apple-pay-feedback { color:#c7352b; }
+#apple-pay-sheet.is-closing { animation:payment-sheet-exit 280ms ease-in both; }
+body:has(#apple-pay-sheet[open]) .app { filter:brightness(.84); }
+@media (max-height:650px) {
+  #apple-pay-sheet { padding-top:7px; padding-bottom:16px; }
+  .wallet-grabber { margin-bottom:8px; }
+  #apple-pay-demo { margin-bottom:8px; }
+  .wallet-card-row { padding:8px 0 12px; }
+  .wallet-info-row { padding:9px 0; }
+  .wallet-amount { padding:12px 0 6px; }
+  .wallet-amount > strong { font-size:30px; }
+  .wallet-auth { min-height:124px; padding-top:8px; }
+  .wallet-face,.wallet-face svg { width:48px; height:48px; }
+  #apple-pay-confirm { min-height:84px; gap:6px; }
+}
+@keyframes payment-sheet-enter { from { transform:translateY(100%); } to { transform:none; } }
+@keyframes payment-sheet-exit { to { transform:translateY(100%); opacity:.7; } }
+@keyframes wallet-face-pulse { to { transform:scale(.94); opacity:.55; } }
+@keyframes wallet-scan { from { translate:0 0; } to { translate:0 36px; } }
+@keyframes wallet-spin { to { rotate:360deg; } }
+@keyframes wallet-check-draw { from { stroke-dashoffset:40; } to { stroke-dashoffset:0; } }
+@keyframes wallet-success { from { transform:scale(.75); } to { transform:scale(1); } }
+@keyframes wallet-side-pulse { 50% { translate:3px 0; opacity:.4; } }
+@keyframes wallet-shake { 25% { translate:-4px 0; } 75% { translate:4px 0; } }
+@media (prefers-reduced-motion:reduce) {
+  #apple-pay-sheet[open], #apple-pay-sheet.is-closing, #apple-pay-sheet .wallet-face,
+  #apple-pay-sheet .wallet-face *, #apple-pay-sheet .wallet-side-button span { animation:none !important; }
+}
+@media (prefers-reduced-motion:reduce) { .reservation-hint span { animation:none; } }
+.catalog-choice .film-rating { display:flex; color:var(--ink); margin:4px 0 0; font-size:12px; }
+.review-example { padding:16px 0; border-top:1px solid var(--line); }
+.review-example p { margin-bottom:0; white-space:pre-wrap; overflow-wrap:anywhere; }
+#review-examples { margin-top:22px; }
+.review-rating { border:0; margin:0 0 12px; padding:0; }
+.review-rating legend { padding:0; font-weight:600; }
+.review-stars { display:flex; width:max-content; max-width:100%; }
+.review-stars label { position:relative; display:grid; place-items:center; width:44px; height:48px; cursor:pointer; }
+.review-stars input { position:absolute; inset:0; width:100%; height:100%; margin:0; opacity:0; cursor:pointer; }
+.review-stars span { font-size:32px; color:var(--muted); opacity:.45; pointer-events:none; }
+.review-stars label:has(input:checked) span,
+.review-stars label:has(~ label input:checked) span { color:var(--accent); opacity:1; }
+.review-stars label:has(input:focus-visible) { outline:2px solid var(--ink); outline-offset:-2px; border-radius:8px; }
+.review-comment-label { display:block; margin-bottom:6px; }
+#review-comment { width:100%; min-height:100px; resize:vertical; padding:12px; border:1px solid var(--line); border-radius:14px; background:var(--bg); color:var(--ink); font:inherit; }
+#review-comment:focus-visible { outline:2px solid var(--ink); outline-offset:2px; }
+#review-submit { margin-top:12px; }
+#review-feedback:empty { display:none; }
+.review-published-heading { display:flex; flex-wrap:wrap; justify-content:space-between; gap:8px; }
+#review-date { color:var(--muted); font-size:13px; }
+#review-score { color:var(--ink); font-weight:700; }
+#review-text { white-space:pre-wrap; overflow-wrap:anywhere; }
+.review-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
+#my-reviews { touch-action:pan-y pinch-zoom; }
+#my-reviews-list { display:grid; gap:16px; margin-top:24px; }
+.managed-review { padding:18px; border:1px solid var(--line); border-radius:22px; background:var(--panel); }
+.managed-review-heading { display:flex; align-items:center; gap:14px; }
+.managed-review-heading img { width:52px; aspect-ratio:2/3; object-fit:contain; border-radius:8px; }
+.managed-review-heading h3 { font:400 27px/1.1 "Instrument Serif",Georgia,serif; margin:0 0 6px; overflow-wrap:anywhere; }
+.managed-review-heading time { font-size:13px; color:var(--muted); }
+.managed-review-text { white-space:pre-wrap; overflow-wrap:anywhere; }
+#review-editor { width:min(440px,calc(100% - 28px)); max-height:90dvh; padding:24px; border:1px solid var(--line); border-radius:24px; background:var(--panel); color:var(--ink); }
+#review-editor::backdrop { background:#100d0c80; backdrop-filter:blur(6px); }
+#review-editor-title { font-size:36px; }
+#managed-review-form label[for] { display:block; margin:10px 0 6px; }
+#managed-review-comment { width:100%; min-height:100px; padding:12px; border:1px solid var(--line); border-radius:12px; resize:vertical; background:var(--bg); color:var(--ink); font:inherit; }
+#my-reviews-feedback:empty,#managed-review-feedback:empty { display:none; }
+.detail-notes { display:grid; gap:22px; }
+.detail-synopsis { padding:2px 14px 4px; border-inline-start:2px solid var(--accent); }
+.detail-synopsis p { max-width:54ch; margin:0; line-height:1.65; }
+.detail-credits {
+  padding:16px 14px 10px; border-radius:18px;
+  border:1px solid color-mix(in srgb,var(--line) 68%,transparent); background:var(--panel);
+}
+.detail-credits dl { display:grid; gap:14px; margin:12px 0; }
+.detail-credits dt { font-size:14px; color:var(--muted); }
+.detail-credits dd { margin:2px 0 0; font-weight:600; }
+.detail-credits a { display:inline-flex; align-items:center; min-height:44px; color:var(--muted); font-size:14px; text-underline-offset:4px; }
+@container (min-width:590px) {
+  .detail-heading { grid-template-columns:140px minmax(0,1fr); gap:25px; }
+  .detail-notes { grid-template-columns:minmax(0,1.35fr) minmax(0,1fr); align-items:start; }
+}
+.page-stage.is-moving { position:relative; isolation:isolate; z-index:0; overflow-x:clip; }
+main.is-tab-dragging { position:relative; user-select:none; }
+@media (pointer:fine) {
+  main.is-tab-dragging, main.is-tab-dragging > .tab-outgoing * { cursor:grabbing; }
+}
+main.is-tab-dragging > .tab-outgoing {
+  position:relative; z-index:1; background-color:var(--bg);
+}
+main.is-tab-dragging > .tab-preview[hidden] {
+  display:block !important; position:absolute; z-index:0; left:0; width:100%; min-height:100%;
+  background:var(--bg); pointer-events:none;
+}
+.app:has(> .page-stage.is-moving):not(:has(#search:not([hidden]),#detail:not([hidden]))) > .nav {
+  opacity:1; visibility:visible; pointer-events:auto;
+}
+html.is-shared-transition { view-transition-name:none; }
+::view-transition,::view-transition-group(*),::view-transition-image-pair(*),
+::view-transition-old(*),::view-transition-new(*) { pointer-events:none; }
+::view-transition-group(film-title),
+::view-transition-group(search-control) {
+  animation-duration:440ms;
+  animation-timing-function:cubic-bezier(.22,1,.36,1);
+}
+::view-transition-group(root) { animation-duration:440ms; }
+::view-transition-group(search-content) { animation-duration:440ms; }
+::view-transition-new(search-content) {
+  animation:search-content-enter 360ms cubic-bezier(.22,1,.36,1) 60ms both;
+}
+::view-transition-old(search-content) {
+  animation:search-content-enter 230ms ease-in reverse both;
+}
+@keyframes search-content-enter {
+  from { opacity:0; transform:translateY(20px); }
+  to { opacity:1; transform:translateY(0); }
+}
+#tickets { padding-inline:22px; }
+#tickets > h2 { margin-bottom:24px; }
+.tickets-empty {
+  padding:28px 22px; background:var(--panel);
+  border:1px dashed var(--line); border-radius:24px;
+}
+.tickets-empty h3,.ticket-film-info h3 {
+  margin:0; font:400 34px/1 "Instrument Serif",Georgia,serif;
+}
+.tickets-empty p { color:var(--muted); margin:10px 0 18px; }
+.ticket-card {
+  position:relative; border:1px solid var(--line); border-radius:24px;
+  background:var(--panel); box-shadow:0 12px 28px #100d0c24;
+}
+.ticket-film-info {
+  display:flex; align-items:flex-end; gap:16px; min-height:164px; padding:18px;
+  border-radius:23px 23px 0 0; color:#fff9eb;
+  background:#211412;
+  background-image:linear-gradient(90deg,#171210ed,#171210d1 60%,#17121096),var(--ticket-poster);
+  background-size:cover; background-position:center 36%;
+}
+.ticket-film-info img { display:block; width:clamp(60px,19vw,90px); aspect-ratio:2 / 3; object-fit:contain; flex:none; border-radius:8px; }
+.ticket-film-info > div { min-width:0; }
+.ticket-film-info h3 { margin-top:8px; overflow-wrap:anywhere; }
+.ticket-status {
+  display:inline-flex; border:1px solid currentColor; border-radius:99px;
+  padding:4px 9px; color:#d3edce; font-size:14px; margin:0;
+}
+.ticket-card[data-status="cancelled"] .ticket-status { color:#ffd0c5; }
+.ticket-card[data-status="cancelled"] .ticket-film-info img { filter:saturate(.4); }
+.ticket-stub { position:relative; border-top:1px dashed var(--line); padding:18px; }
+.ticket-stub::before,.ticket-stub::after {
+  content:""; position:absolute; top:-10px; width:18px; height:18px;
+  border-radius:50%; background:var(--bg); pointer-events:none;
+}
+.ticket-stub::before { left:-10px; }
+.ticket-stub::after { right:-10px; }
+.ticket-fields {
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px 12px; margin:0;
+}
+.ticket-fields dt { color:var(--muted); font-size:14px; }
+.ticket-fields dd { margin:2px 0 0; font-weight:700; overflow-wrap:anywhere; }
+.ticket-footer { display:flex; align-items:center; flex-wrap:wrap; gap:8px 16px; margin-top:16px; }
+.ticket-footer small { color:var(--muted); }
+.ticket-footer button { margin-inline-start:auto; }
+#account { padding-inline:22px; }
+#account > h2 { margin-bottom:22px; }
+.membership-card {
+  position:relative; isolation:isolate; overflow:hidden;
+  display:flex; flex-direction:column; justify-content:space-between; align-items:flex-start;
+  gap:28px; min-height:194px; padding:20px 22px; border-radius:22px;
+  border:1px solid #f7997490; color:#fff9eb;
+  background:radial-gradient(ellipse at 105% -10%,#bb3729 0%,transparent 66%),
+    linear-gradient(128deg,#641b18,#351514 76%);
+  box-shadow:0 16px 32px #2b110e36;
+}
+.membership-card::before,.membership-card::after {
+  content:""; position:absolute; z-index:-1; pointer-events:none;
+  inset:auto -40px -62px auto; width:168px; aspect-ratio:1;
+  border:1px solid #fff9eb38; border-radius:50%;
+}
+.membership-card::after { width:216px; inset:auto -64px -86px auto; }
+.membership-card .eyebrow { margin:0; font-size:12px; }
+.membership-card h3 { margin:0; font:400 clamp(36px,10vw,52px)/1 "Instrument Serif",Georgia,serif; }
+.membership-card small { display:block; margin-top:5px; color:#f8d4c8; }
+.account-links { display:grid; gap:10px; margin-top:22px; }
+.account-links button {
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  width:100%; min-height:68px; text-align:left; border-radius:16px;
+}
+.account-links .account-link-copy { min-width:0; flex:1; }
+.account-links svg { fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; flex:none; }
+.account-icon { width:24px; height:24px; }
+.account-chevron { width:18px; height:18px; color:var(--muted); }
+.account-links button strong,.account-links button small { display:block; }
+.account-links button small { color:var(--muted); margin-top:2px; }
+.settings-group {
+  min-width:0; margin:18px 0 0; padding:12px; border:1px solid var(--line);
+  border-radius:20px; background:var(--panel);
+}
+.settings-group h3 { margin:0 0 8px; font-size:17px; }
+.settings-options { display:grid; gap:6px; }
+.settings-option,.settings-switch {
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  min-height:48px; padding:8px 10px; border:1px solid transparent; border-radius:12px;
+  cursor:pointer;
+}
+.settings-option:has(input:checked) { border-color:var(--line); background:var(--bg); }
+.settings-option:focus-within,.settings-switch:focus-within { outline:2px solid var(--ink); outline-offset:2px; }
+.settings-option input { width:18px; height:18px; margin:0; accent-color:var(--accent); }
+#profile { touch-action:pan-y pinch-zoom; }
+#profile-form label { display:block; margin:18px 0 6px; }
+#profile-form input { display:block; width:100%; min-height:48px; padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:var(--bg); color:var(--ink); font:inherit; }
+#profile-form input:focus-visible { outline:2px solid var(--ink); outline-offset:2px; }
+.profile-local { font-size:13px; margin:16px 0; }
+#profile-feedback:empty { display:none; }
+.double-click-label { display:block; margin-bottom:6px; }
+#double-click-mode { width:100%; min-height:44px; padding:8px 12px; border:1px solid var(--line); border-radius:12px; background:var(--bg); color:var(--ink); font:inherit; }
+#double-click-description { font-size:14px; }
+#double-click-custom label { display:flex; flex-wrap:wrap; justify-content:space-between; gap:8px; }
+#double-click-delay { width:100%; min-height:44px; accent-color:var(--accent); }
+.settings-switch > span { flex:1; }
+.settings-switch small { display:block; margin-top:3px; color:var(--muted); }
+.settings-switch input {
+  flex:none; appearance:none; width:44px; height:26px; margin:0;
+  border:1px solid var(--line); border-radius:99px;
+  background:radial-gradient(circle at 12px center,var(--ink) 7px,transparent 8px),var(--bg);
+}
+.settings-switch input:checked {
+  border-color:var(--accent);
+  background:radial-gradient(circle at calc(100% - 12px) center,var(--on) 7px,transparent 8px),var(--accent);
+}
+@media (forced-colors:active) { .settings-switch input { appearance:auto; } }
+.content { padding:22px 18px }
+.panel { border:1px solid var(--line); border-radius:20px; background:var(--panel); padding:16px; margin-top:16px }
+.controls { display:flex; flex-wrap:wrap; gap:8px }
+.session { text-align:left }
+.session small { display:block }
+.nav { position:fixed; isolation:isolate; z-index:4; left:50%; bottom:calc(10px + env(safe-area-inset-bottom)); transform:translateX(-50%); width:calc(100% - 24px); display:flex; gap:4px; padding:5px; border:1px solid var(--line); border-top-color:var(--ink); border-radius:28px; box-shadow:0 8px 22px #0005; background:var(--panel) }
+@supports (backdrop-filter:blur(12px)) { .nav { background:var(--glass); backdrop-filter:blur(12px) } }
+@media (prefers-reduced-transparency:reduce) { .nav { background:var(--panel); backdrop-filter:none } }
+.nav button { flex:1; min-width:0; min-height:52px; display:grid; justify-items:center; align-content:center; gap:3px; padding:5px; background:transparent; border-color:transparent; font-size:13px; line-height:1.15 }
+.nav svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round }
+.nav::before {
+  content:""; position:absolute; z-index:-1; pointer-events:none;
+  inset:5px auto 5px 5px;
+  width:calc((100% - 18px) / 3);
+  border:1px solid var(--line); border-radius:22px; box-sizing:border-box;
+  background:linear-gradient(145deg,rgb(255 255 255 / 14%),transparent 66%),var(--panel);
+  box-shadow:inset 0 1px rgb(255 255 255 / 22%),0 3px 12px rgb(0 0 0 / 18%);
+  transform:translateX(calc(var(--active-tab,0) * (100% + 4px)));
+  transition:transform 330ms cubic-bezier(.22,1,.36,1);
+}
+.nav button { transition:color 180ms ease; }
+.nav svg { transition:transform 180ms ease; }
+.nav button:active svg { transform:scale(.88); }
+.nav button[aria-current="page"] { font-weight:700; }
+.nav button.tab-enter svg { animation:tab-pop 340ms ease-out; }
+@keyframes tab-pop {
+  0%,100% { transform:translateY(0) scale(1); }
+  45% { transform:translateY(-3px) scale(1.12); }
+}
+@media (prefers-reduced-motion:reduce) {
+  .nav::before,.nav button,.nav svg { transition:none; }
+  .nav button.tab-enter svg { animation:none; }
+  .nav button:active svg { transform:none; }
+}
+@media (forced-colors:active) {
+  .nav::before { display:none; }
+  .nav button[aria-current="page"] { border-color:ButtonText; }
+}
+#feedback:empty { margin:0 }
+</style>
+<link rel="stylesheet" href="auditorium-ui.css?v=immersive-seats-8">
+<style id="responsive">
+/* ===== Version responsive : téléphone < 700 px inchangé, tablette dès 700 px, bureau dès 1000 px ===== */
+:root { --page-gutter:18px; --page-max:1180px; --col:720px; --detail-split:52%; }
+.app { --edge:max(var(--page-gutter), calc((100% - var(--page-max)) / 2)); }
+
+@media (min-width:700px) {
+  :root { --page-gutter:clamp(28px,5vw,72px); }
+
+  /* Cadre et navigation */
+  header { padding-inline:var(--edge); }
+  .brand { font-size:clamp(22px,2.2vw,28px); }
+  .nav { max-width:440px; }
+  .reservation-bar { width:min(100%,640px); }
+
+  /* Accueil : texte aligné sur la grille, extrait pleine largeur */
+  .hero { --hero-gutter:var(--page-gutter); padding-inline:var(--edge); }
+  .film-overlay { max-width:min(100%,600px); }
+  .hero h1,.hero h2 { max-width:18ch; font-size:clamp(44px,min(5.4vw,9svh),88px); }
+  .hero p { max-width:42ch; }
+  .hero .film-more { width:auto; min-width:260px; }
+  .reel-controls { inset-inline:var(--edge) auto; width:min(440px,calc(100% - 2 * var(--page-gutter))); }
+  .reel-progress { inset-inline:var(--edge) auto; width:calc(100% - 2 * var(--edge)); }
+
+  /* En-tête aligné sur la colonne de la page affichée */
+  .app:has(:is(#tickets,#account,#payment,#settings,#profile,#my-reviews):not([hidden])) > header { padding-inline:max(var(--page-gutter), calc((100% - var(--col)) / 2)); }
+  .app:has(#booking:not([hidden]):not(:has(#auditorium-view:not([hidden])))) > header { padding-inline:max(var(--page-gutter), calc((100% - 880px) / 2)); }
+
+  /* Pages de contenu : colonne centrée, fonds pleine largeur */
+  .content,#tickets,#account,#payment { padding-inline:max(var(--page-gutter), calc((100% - var(--col)) / 2)); }
+  #search { padding-inline:max(var(--page-gutter), calc((100% - 880px) / 2)); }
+  #booking { --col:880px; }
+  .ticket-fields { grid-template-columns:repeat(4,minmax(0,1fr)); }
+  .account-links { grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); }
+
+  /* Fiche film en une colonne : lecture confortable */
+  .detail-copy { padding-inline:max(clamp(16px,5cqw,32px), calc((100% - 820px) / 2)); }
+  .detail-heading { padding-inline:max(clamp(16px,5cqw,32px), calc((100% - 820px) / 2)); }
+
+  /* Salle 3D : vue plein écran, panneaux centrés */
+  #booking:has(#auditorium-view:not([hidden])) .auditorium-view { left:0; translate:none; width:100%; }
+  #booking:has(#auditorium-view:not([hidden])) :is(.booking-heading,.auditorium-toolbar) { padding-inline:var(--edge); }
+  #booking:has(#auditorium-view:not([hidden])) .seat-picker { width:min(calc(100% - 24px),640px); justify-self:center; margin-inline:0; }
+  #booking:has(#auditorium-view:not([hidden])) .booking-summary { width:min(100%,640px); justify-self:center; border-radius:20px 20px 0 0; }
+}
+
+@media (min-width:700px) and (min-height:701px) and (orientation:portrait) {
+  .film-overlay { --poster-width:clamp(110px,18svh,190px); }
+}
+
+/* Paysage : contenu plus compact pour garder l'action au-dessus de la navigation */
+@media (min-width:700px) and (min-height:431px) and (orientation:landscape) {
+  .film-overlay { --poster-width:clamp(80px,12svh,128px); }
+  .film-poster { margin-bottom:12px; }
+  .hero h1,.hero h2 { max-width:20ch; font-size:clamp(40px,min(4.6vw,8svh),76px); }
+}
+
+/* Bureau et tablette paysage : le dégradé laisse voir plus d'image */
+@media (min-width:1000px) and (orientation:landscape) {
+  .film-overlay::before,.film-overlay::after { inset:34% 0 0; }
+  .hero p { font-size:18px; }
+
+  /* Fiche film : visuel fixe à gauche, séances et avis qui défilent à droite */
+  #detail { display:grid; grid-template-columns:var(--detail-split) minmax(0,1fr); align-items:start; container-type:normal; }
+  #detail > .detail-cover { container-type:inline-size; position:sticky; top:0; height:100dvh; min-height:0; }
+  #detail > .detail-copy { container-type:inline-size; min-height:100dvh; padding:calc(var(--header-height) + 8px) clamp(28px,4vw,64px) 48px; }
+  .app:has(#detail:not([hidden])) header { width:var(--detail-split); padding-inline:clamp(18px,2.5vw,40px); }
+  .detail-heading { padding-inline:clamp(24px,3vw,48px); }
+  .reservation-bar { left:auto; right:0; translate:none; width:calc(100% - var(--detail-split)); }
+}
+
+@media (min-width:1000px) and (orientation:landscape) and (max-height:650px) {
+  #detail > .detail-cover { min-height:0; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <span class="brand">Ciné Lumière</span>
+  <button type="button" class="page-back" id="page-back" data-go="films" hidden>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg>
+    <span>À l’affiche</span>
+  </button>
+</header>
+<div class="page-stage">
+<main>
+<section id="films">
+  <div class="reel-controls" role="group" aria-label="Commandes des affiches">
+    <button type="button" class="search-trigger" id="search-trigger">
+      <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="5.5"/><path d="m15 15 5 5"/></svg>
+      Rechercher
+    </button>
+    <button type="button" id="reel-toggle" aria-label="Mettre le défilement en pause">
+      <svg viewBox="0 0 24 24" aria-hidden="true" id="reel-pause"><path d="M8 5h3v14H8zm5 0h3v14h-3z"/></svg>
+      <svg viewBox="0 0 24 24" aria-hidden="true" id="reel-play" hidden><path d="m8 5 12 7-12 7z"/></svg>
+    </button>
+  </div>
+  <input type="range" class="reel-progress" id="reel-progress" aria-label="Position de lecture" min="0" max="1000" value="0" disabled>
+  <div id="scroll-hint" class="scroll-hint" role="status" data-gesture="tap" hidden>
+    <div class="gesture-demo" aria-hidden="true">
+      <span class="gesture-trail"></span><span class="gesture-ripple"></span>
+      <svg viewBox="0 0 40 48"><path d="M13 27V9a3 3 0 0 1 6 0v14-4a3 3 0 0 1 6 0v5-3a3 3 0 0 1 6 0v5-2a3 3 0 0 1 6 0v11c0 6-4 10-10 10h-5c-4 0-6-2-8-5L5 29c-2-3 2-6 4-4l4 4z"/></svg>
+    </div>
+    <strong id="gesture-hint-title"></strong>
+    <small id="gesture-hint-description"></small>
+  </div>
+  <div id="playback-feedback" class="playback-feedback" aria-hidden="true" hidden>
+    <svg viewBox="0 0 24 24"><path id="feedback-symbol"/></svg>
+  </div>
+  <div class="film-reel" tabindex="0" role="region" aria-label="Extraits des films" aria-keyshortcuts="Space ArrowUp ArrowDown Escape">
+    <article class="hero has-video" data-clip-source="https://www.moviefone.com/movie/project-hail-mary/BCcUFMWbBHOY3zv0jhK5J4/videos/aFTFAWQG/" style="--cover:url(extraits/project-hail-mary-grace-rencontre-rocky.webp)" data-duration="2 h 36" data-director="Phil Lord et Christopher Miller" data-cast="Ryan Gosling, Sandra Hüller, James Ortiz" data-cast-label="Distribution" data-film-source="https://www.rottentomatoes.com/m/project_hail_mary">
+      <video class="hero-video" src="extraits/project-hail-mary-grace-rencontre-rocky.mp4" muted playsinline preload="none" aria-hidden="true"></video>
+      <div class="film-overlay">
+        <img class="film-poster" draggable="false" src="affiches/project-hail-mary.webp" alt="">
+        <p class="eyebrow">2026 · Science-fiction</p>
+        <h1 tabindex="-1">Project Hail Mary</h1>
+        <p class="film-summary">Un enseignant se réveille seul dans un vaisseau spatial et doit comprendre la mission dont dépend la Terre.</p>
+        <button type="button" class="primary film-more">Voir plus</button>
+      </div>
+    </article>
+    <article class="hero has-video" data-clip-source="https://www.moviefone.com/movie/supergirl-woman-of-tomorrow/HZE9ZYwn82Uv0YNMTwx2g5/videos/yIdQyUKG/" style="--cover:url(extraits/supergirl.webp)" data-duration="1 h 48" data-director="Craig Gillespie" data-cast="Milly Alcock, Jason Momoa, Matthias Schoenaerts" data-cast-label="Distribution" data-film-source="https://www.rottentomatoes.com/m/supergirl_2026">
+      <video class="hero-video" src="extraits/supergirl.mp4" muted playsinline preload="none" aria-hidden="true"></video>
+      <div class="film-overlay">
+        <img class="film-poster" draggable="false" src="affiches/supergirl.webp" alt="">
+        <p class="eyebrow">2026 · Super-héros</p>
+        <h2 tabindex="-1">Supergirl</h2>
+        <p class="film-summary">Kara Zor-El traverse la galaxie avec une jeune fille en quête de justice.</p>
+        <button type="button" class="primary film-more">Voir plus</button>
+      </div>
+    </article>
+    <article class="hero has-video" data-clip-source="https://www.moviefone.com/movie/untitled-the-devil-wears-prada-sequel/RBFyfei3N96MClhiTxPqI6/videos/TWUB3EQV/" style="--cover:url(extraits/the-devil-wears-prada-2.webp)" data-duration="1 h 59" data-director="David Frankel" data-cast="Meryl Streep, Anne Hathaway, Emily Blunt" data-cast-label="Distribution" data-film-source="https://www.rottentomatoes.com/m/the_devil_wears_prada_2">
+      <video class="hero-video" src="extraits/the-devil-wears-prada-2.mp4" muted playsinline preload="none" aria-hidden="true"></video>
+      <div class="film-overlay">
+        <img class="film-poster" draggable="false" src="affiches/the-devil-wears-prada-2.webp" alt="">
+        <p class="eyebrow">2026 · Comédie dramatique</p>
+        <h2 tabindex="-1">The Devil Wears Prada 2</h2>
+        <p class="film-summary">Miranda Priestly tente de préserver l’avenir de son magazine alors que le monde de la mode change.</p>
+        <button type="button" class="primary film-more">Voir plus</button>
+      </div>
+    </article>
+    <article class="hero has-video" data-clip-source="https://www.rottentomatoes.com/m/wuthering_heights_2026/videos/yKeUWKO5LGj4" style="--cover:url(extraits/wuthering-heights.webp)" data-duration="2 h 16" data-director="Emerald Fennell" data-cast="Margot Robbie, Jacob Elordi, Hong Chau" data-cast-label="Distribution" data-film-source="https://www.rottentomatoes.com/m/wuthering_heights_2026">
+      <video class="hero-video" src="extraits/wuthering-heights.mp4" muted playsinline preload="none" aria-hidden="true"></video>
+      <div class="film-overlay">
+        <img class="film-poster" draggable="false" src="affiches/wuthering-heights.webp" alt="">
+        <p class="eyebrow">2026 · Drame romantique</p>
+        <h2 tabindex="-1">Wuthering Heights</h2>
+        <p class="film-summary">Sur les landes du Yorkshire, la relation entre Catherine et Heathcliff défie les attentes de leurs proches.</p>
+        <button type="button" class="primary film-more">Voir plus</button>
+      </div>
+    </article>
+    <article class="hero has-video" data-clip-source="https://www.rottentomatoes.com/m/ready_or_not_2_here_i_come/videos/muSHUiIXlXyW" style="--cover:url(extraits/ready-or-not-2.webp)" data-duration="1 h 48" data-director="Matt Bettinelli-Olpin et Tyler Gillett" data-cast="Samara Weaving, Kathryn Newton, Sarah Michelle Gellar" data-cast-label="Distribution" data-film-source="https://www.rottentomatoes.com/m/ready_or_not_2_here_i_come">
+      <video class="hero-video" src="extraits/ready-or-not-2.mp4" muted playsinline preload="none" aria-hidden="true"></video>
+      <div class="film-overlay">
+        <img class="film-poster" draggable="false" src="affiches/ready-or-not-2.webp" alt="">
+        <p class="eyebrow">2026 · Horreur</p>
+        <h2 tabindex="-1">Ready or Not 2: Here I Come</h2>
+        <p class="film-summary">Grace et sa sœur Faith doivent survivre à une nouvelle chasse.</p>
+        <button type="button" class="primary film-more">Voir plus</button>
+      </div>
+    </article>
+    <article class="hero has-video" data-clip-source="https://www.rottentomatoes.com/m/toy_story_5/videos/eEWRBevwIuME" style="--cover:url(extraits/toy-story-5.webp)" data-duration="1 h 42" data-director="Andrew Stanton" data-cast="Tom Hanks, Tim Allen, Joan Cusack" data-cast-label="Voix originales" data-film-source="https://www.rottentomatoes.com/m/toy_story_5">
+      <video class="hero-video" src="extraits/toy-story-5.mp4" muted playsinline preload="none" aria-hidden="true"></video>
+      <div class="film-overlay">
+        <img class="film-poster" draggable="false" src="affiches/toy-story-5.webp" alt="">
+        <p class="eyebrow">2026 · Animation</p>
+        <h2 tabindex="-1">Toy Story 5</h2>
+        <p class="film-summary">Les jouets de Bonnie découvrent qu’une tablette peut prendre toute la place dans ses jeux.</p>
+        <button type="button" class="primary film-more">Voir plus</button>
+      </div>
+    </article>
+    <article class="hero has-video" data-clip-source="https://www.moviefone.com/movie/untitled-the-super-mario-bros-movie-sequel/scNm2cdIP2SiSm2TtS8Op3/videos/k5rcPhi2/" style="--cover:url(extraits/super-mario-galaxy.webp)" data-duration="1 h 38" data-director="Aaron Horvath et Michael Jelenic" data-cast="Chris Pratt, Anya Taylor-Joy, Charlie Day" data-cast-label="Voix originales" data-film-source="https://www.rottentomatoes.com/m/the_super_mario_galaxy_movie">
+      <video class="hero-video" src="extraits/super-mario-galaxy.mp4" muted playsinline preload="none" aria-hidden="true"></video>
+      <div class="film-overlay">
+        <img class="film-poster" draggable="false" src="affiches/super-mario-galaxy.webp" alt="">
+        <p class="eyebrow">2026 · Animation</p>
+        <h2 tabindex="-1">The Super Mario Galaxy Movie</h2>
+        <p class="film-summary">Mario et Luigi quittent le Royaume Champignon pour une aventure parmi les étoiles.</p>
+        <button type="button" class="primary film-more">Voir plus</button>
+      </div>
+    </article>
+    <article class="hero has-video" data-clip-source="https://www.rottentomatoes.com/m/hoppers/videos/tSThVPpYdPHW" style="--cover:url(extraits/hoppers.webp)" data-duration="1 h 44" data-director="Daniel Chong" data-cast="Piper Curda, Bobby Moynihan, Jon Hamm" data-cast-label="Voix originales" data-film-source="https://www.rottentomatoes.com/m/hoppers">
+      <video class="hero-video" src="extraits/hoppers.mp4" muted playsinline preload="none" aria-hidden="true"></video>
+      <div class="film-overlay">
+        <img class="film-poster" draggable="false" src="affiches/hoppers.webp" alt="">
+        <p class="eyebrow">2026 · Animation</p>
+        <h2 tabindex="-1">Hoppers</h2>
+        <p class="film-summary">Mabel se glisse dans la peau d’un castor robot et découvre le monde des animaux de l’intérieur.</p>
+        <button type="button" class="primary film-more">Voir plus</button>
+      </div>
+    </article>
+    <article class="hero has-video" data-clip-source="https://clip.cafe/michael-2026/one-more-s32/" style="--cover:url(extraits/michael.webp)" data-duration="2 h 07" data-director="Antoine Fuqua" data-cast="Jaafar Jackson, Miles Teller, Colman Domingo" data-cast-label="Distribution" data-film-source="https://www.rottentomatoes.com/m/michael">
+      <video class="hero-video" src="extraits/michael.mp4" muted playsinline preload="none" aria-hidden="true"></video>
+      <div class="film-overlay">
+        <img class="film-poster" draggable="false" src="affiches/michael.webp" alt="">
+        <p class="eyebrow">2026 · Biographie musicale</p>
+        <h2 tabindex="-1">Michael</h2>
+        <p class="film-summary">Le film suit Michael Jackson de ses débuts avec les Jackson 5 à sa carrière solo.</p>
+        <button type="button" class="primary film-more">Voir plus</button>
+      </div>
+    </article>
+    <article class="hero has-video" data-clip-source="https://www.moviefone.com/movie/scream-7/xn1Putz3RwmjIHJsUIliM6/videos/3DUuWbKd/" style="--cover:url(extraits/scream-7.webp)" data-duration="1 h 54" data-director="Kevin Williamson" data-cast="Neve Campbell, Courteney Cox, Isabel May" data-cast-label="Distribution" data-film-source="https://www.rottentomatoes.com/m/scream_7">
+      <video class="hero-video" src="extraits/scream-7.mp4" muted playsinline preload="none" aria-hidden="true"></video>
+      <div class="film-overlay">
+        <img class="film-poster" draggable="false" src="affiches/scream-7.webp" alt="">
+        <p class="eyebrow">2026 · Horreur</p>
+        <h2 tabindex="-1">Scream 7</h2>
+        <p class="film-summary">Sidney Prescott doit protéger sa fille lorsqu’un nouveau Ghostface refait surface.</p>
+        <button type="button" class="primary film-more">Voir plus</button>
+      </div>
+    </article>
+  </div>
+</section>
+<section class="content" id="search" aria-labelledby="search-title" hidden>
+  <div class="search-heading">
+    <button type="button" class="search-back" data-go="films" aria-label="Retour à l’affiche">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m14 5-7 7 7 7"/></svg>
+    </button>
+    <h2 id="search-title" tabindex="-1">Rechercher</h2>
+  </div>
+  <div class="search-field" id="search-field" role="search">
+    <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="5.5"/><path d="m15 15 5 5"/></svg>
+    <input type="search" id="catalog-search" aria-label="Titre ou genre" aria-controls="film-results" placeholder="Titre ou genre" autocomplete="off">
+  </div>
+  <div class="search-results" id="film-results" role="region" aria-label="Résultats de recherche">
+    <ul id="catalog-list"></ul>
+    <p id="catalog-empty" role="status" hidden>Aucun film trouvé.</p>
+  </div>
+</section>
+<section id="detail" aria-labelledby="detail-title" hidden>
+  <div class="detail-cover" id="detail-cover">
+    <div class="detail-heading">
+      <img class="detail-poster" id="detail-poster" alt="">
+      <div>
+        <p class="eyebrow" id="detail-meta"></p>
+        <h2 id="detail-title" tabindex="-1"></h2>
+        <p class="film-rating detail-rating" id="detail-rating"></p>
+      </div>
+    </div>
+  </div>
+  <div class="detail-copy">
+    <div id="detail-booking" aria-labelledby="session-title">
+      <div class="screening-head">
+        <h3 id="session-title">Séances</h3>
+        <p class="muted"><strong>12 €</strong> par place</p>
+      </div>
+      <p class="screening-label" id="days-label">Jour</p>
+      <div class="screening-row">
+        <button type="button" class="screening-arrow" aria-label="Jours précédents" aria-controls="screening-days" disabled>‹</button>
+        <div class="screening-track" id="screening-days" role="group" aria-labelledby="days-label"></div>
+        <button type="button" class="screening-arrow" aria-label="Jours suivants" aria-controls="screening-days" disabled>›</button>
+      </div>
+      <p class="screening-label" id="times-label">Horaire <span class="screening-date" id="screening-date"></span></p>
+      <div class="screening-row">
+        <button type="button" class="screening-arrow" aria-label="Horaires précédents" aria-controls="screening-times" disabled>‹</button>
+        <div class="screening-track" id="screening-times" role="group" aria-labelledby="times-label">
+          <button class="session" type="button" data-time="11 h 00" data-room="2">11 h 00 <small>VF · Salle 2</small></button>
+          <button class="session" type="button" data-time="13 h 45" data-room="4">13 h 45 <small>VF · Salle 4</small></button>
+          <button class="session" type="button" data-time="16 h 15" data-room="6">16 h 15 <small>VF · Salle 6</small></button>
+          <button class="session" type="button" data-time="18 h 30" data-room="2">18 h 30 <small>VF · Salle 2</small></button>
+          <button class="session" type="button" data-time="20 h 30" data-room="4">20 h 30 <small>VF · Salle 4</small></button>
+          <button class="session" type="button" disabled>22 h 15 <small>VF · Complet</small></button>
+        </div>
+        <button type="button" class="screening-arrow" aria-label="Horaires suivants" aria-controls="screening-times" disabled>›</button>
+      </div>
+    </div>
+    <div class="detail-notes">
+      <section class="detail-synopsis" aria-labelledby="synopsis-title">
+        <h3 id="synopsis-title">Synopsis</h3>
+        <p id="detail-synopsis"></p>
+      </section>
+      <section class="detail-credits" aria-labelledby="credits-title">
+        <h3 id="credits-title">Équipe du film</h3>
+        <dl>
+          <div><dt>Réalisation</dt><dd id="detail-director"></dd></div>
+          <div><dt id="detail-cast-label">Distribution</dt><dd id="detail-cast"></dd></div>
+        </dl>
+        <a id="detail-source" target="_blank" rel="noopener noreferrer">Fiche sur Rotten Tomatoes ↗</a>
+      </section>
+    </div>
+    <section class="film-reviews" aria-labelledby="reviews-title">
+      <div class="reviews-heading">
+        <h3 id="reviews-title">Vos avis</h3>
+        <p id="reviews-summary">Aucune note</p>
+      </div>
+      <p class="muted reviews-local">Vos notes et avis sont enregistrés sur cet appareil.</p>
+      <form id="review-form">
+        <fieldset class="review-rating">
+          <legend>Votre note</legend>
+          <div class="review-stars">
+            <label><input type="radio" name="rating" value="1" required aria-label="1 étoile sur 5"><span aria-hidden="true">★</span></label>
+            <label><input type="radio" name="rating" value="2" aria-label="2 étoiles sur 5"><span aria-hidden="true">★</span></label>
+            <label><input type="radio" name="rating" value="3" aria-label="3 étoiles sur 5"><span aria-hidden="true">★</span></label>
+            <label><input type="radio" name="rating" value="4" aria-label="4 étoiles sur 5"><span aria-hidden="true">★</span></label>
+            <label><input type="radio" name="rating" value="5" aria-label="5 étoiles sur 5"><span aria-hidden="true">★</span></label>
+          </div>
+        </fieldset>
+        <label class="review-comment-label" for="review-comment">Votre avis <span class="muted">(facultatif)</span></label>
+        <textarea id="review-comment" rows="3" maxlength="1500" placeholder="Qu’avez-vous pensé du film ?"></textarea>
+        <button class="primary" type="submit" id="review-submit">Publier mon avis</button>
+      </form>
+      <p id="review-feedback" role="status"></p>
+      <article class="review-published" id="review-published" aria-label="Votre avis publié" hidden>
+        <div class="review-published-heading"><strong>Vous</strong><time id="review-date"></time></div>
+        <p id="review-score"></p>
+        <p id="review-text"></p>
+        <div class="review-actions">
+          <button type="button" id="review-edit">Modifier</button>
+          <button type="button" id="review-delete">Supprimer</button>
+        </div>
+      </article>
+      <div id="review-examples" aria-label="Avis fictifs de démonstration"></div>
+    </section>
+  </div>
+</section>
+<section class="content" id="booking" aria-labelledby="booking-title" hidden>
+  <div class="booking-heading">
+    <p class="eyebrow">Ciné Lumière · Salle <span id="booking-room"></span></p>
+    <h2 id="booking-title" tabindex="-1">Choisir les sièges</h2>
+    <p class="booking-film" id="booking-film"></p>
+    <p class="booking-session muted" id="booking-session"></p>
+  </div>
+
+  <div class="auditorium-view" id="auditorium-view" data-camera="overview" hidden>
+    <canvas id="auditorium-canvas" aria-hidden="true" aria-label="Vue depuis le siège, utilisez les touches fléchées pour tourner la caméra"></canvas>
+  </div>
+  <div class="auditorium-toolbar">
+    <div class="auditorium-caption">
+      <div>
+        <p id="auditorium-caption" role="status" tabindex="-1">Vue d’ensemble</p>
+        <span id="auditorium-look-hint" hidden><span class="look-touch">Glissez pour regarder autour</span><span class="look-mouse">Maintenez le clic et bougez la souris</span><span class="look-locked">Relâchez le clic pour libérer le curseur</span><span class="look-unavailable">Verrouillage indisponible · Glissez pour regarder</span></span>
+        <p id="projection-notice" role="status" hidden></p>
+      </div>
+      <button type="button" id="auditorium-overview" hidden>Vue d’ensemble</button>
+    </div>
+  </div>
+  <p class="muted" id="room-fallback" hidden>La vue 3D est indisponible. Choisissez vos places sur le plan.</p>
+
+  <div class="seat-picker">
+    <div class="seat-picker-head">
+      <h3 id="seat-map-title">Plan de salle</h3>
+      <div class="seat-legend"><span>Libre</span><span>✓ Sélectionné</span><span class="seat-legend-occupied">Occupé</span></div>
+    </div>
+    <div class="seat-map-scroll" role="region" aria-labelledby="seat-map-title">
+      <div class="seat-map">
+        <p class="seat-screen">Écran</p>
+        <div id="seat-map"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="booking-summary">
+    <div class="booking-summary-row">
+      <div>
+        <p id="total" role="status">0 place · 0 €</p>
+        <p id="booking-selection">12 € par place</p>
+      </div>
+      <button type="button" class="primary" id="pay" disabled>Continuer</button>
+    </div>
+    <p id="feedback" role="alert"></p>
+  </div>
+</section>
+<section class="content" id="payment" aria-labelledby="payment-title" hidden>
+  <p class="eyebrow muted">Votre séance</p>
+  <h2 id="payment-title" tabindex="-1">Paiement</h2>
+  <article class="payment-recap" aria-labelledby="payment-film">
+    <img id="payment-poster" alt="">
+    <div><h3 id="payment-film"></h3><p class="muted" id="payment-session"></p></div>
+  </article>
+  <dl class="payment-details">
+    <div><dt>Sièges</dt><dd id="payment-seats"></dd></div>
+    <div><dt id="payment-quantity"></dt><dd id="payment-subtotal"></dd></div>
+    <div class="payment-total"><dt>Total</dt><dd id="payment-total"></dd></div>
+  </dl>
+  <div class="payment-method">
+    <h3>Comment souhaitez-vous payer ?</h3>
+    <button type="button" class="apple-pay-button" id="apple-pay" aria-label="Payer avec Apple Pay">Payer avec <strong>Apple Pay</strong></button>
+    <p class="muted payment-demo">Paiement de démonstration. Aucun débit ne sera effectué.</p>
+  </div>
+</section>
+<section class="content" id="tickets" aria-labelledby="tickets-title" hidden>
+  <h2 id="tickets-title" tabindex="-1">Mes billets</h2>
+  <div class="tickets-empty" id="empty">
+    <h3>Aucun billet</h3>
+    <p>Vos billets apparaîtront ici après une réservation.</p>
+    <button type="button" class="primary" data-go="films">Découvrir les films</button>
+  </div>
+  <article class="ticket-card" id="ticket" aria-labelledby="ticket-film" hidden>
+    <div class="ticket-film-info">
+      <img id="ticket-poster" alt="">
+      <div>
+        <p class="ticket-status" id="ticket-status" role="status">Billet confirmé</p>
+        <h3 id="ticket-film"></h3>
+      </div>
+    </div>
+    <div class="ticket-stub">
+      <dl class="ticket-fields">
+        <div><dt>Jour</dt><dd id="ticket-day"></dd></div>
+        <div><dt>Séance</dt><dd id="ticket-time"></dd></div>
+        <div><dt>Salle</dt><dd id="ticket-room"></dd></div>
+        <div><dt id="ticket-seats-label">Sièges</dt><dd id="ticket-seats"></dd></div>
+      </dl>
+      <div class="ticket-footer">
+        <small>Billet de démonstration</small>
+        <button type="button" id="cancel">Annuler la réservation</button>
+      </div>
+    </div>
+  </article>
+</section>
+<section class="content" id="account" aria-labelledby="account-title" hidden>
+  <h2 id="account-title" tabindex="-1">Mon compte</h2>
+  <article class="membership-card" aria-labelledby="membership-title">
+    <p class="eyebrow">Carte d’abonné</p>
+    <div>
+      <h3 id="membership-title">Lorem Ipsum</h3>
+      <small>Carte de démonstration</small>
+    </div>
+  </article>
+  <div class="account-links">
+    <button type="button" data-go="profile" aria-labelledby="account-profile-label" aria-describedby="account-profile-description">
+      <svg class="account-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/></svg>
+      <span class="account-link-copy"><strong id="account-profile-label">Gérer mon compte</strong><small id="account-profile-description">Nom et coordonnées</small></span>
+      <svg class="account-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+    </button>
+    <button type="button" data-go="my-reviews" aria-labelledby="account-reviews-label" aria-describedby="account-reviews-description">
+      <svg class="account-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v14l4-4h3"/><path d="m17 12 1.5 3 3.3.5-2.4 2.3.6 3.2-3-1.5-3 1.5.6-3.2-2.4-2.3 3.3-.5z"/></svg>
+      <span class="account-link-copy"><strong id="account-reviews-label">Mes avis</strong><small id="account-reviews-description">Notes et commentaires publiés</small></span>
+      <svg class="account-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+    </button>
+    <button type="button" data-go="settings" aria-labelledby="account-settings-label" aria-describedby="account-settings-status">
+      <svg class="account-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m10 3-.6 2.1-2 .9-1.9-.7-2 3.4L5 10.2v2.2l-1.5 1.5 2 3.4 2-.6 1.9 1 .6 2.3h4l.6-2.3 1.9-1 2 .6 2-3.4-1.5-1.5v-2.2l1.5-1.5-2-3.4-1.9.7-2-.9L14 3z"/><circle cx="12" cy="11.5" r="3"/></svg>
+      <span class="account-link-copy"><strong id="account-settings-label">Paramètres</strong><small id="account-settings-status">Apparence, vidéo et gestes</small></span>
+      <svg class="account-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+    </button>
+  </div>
+</section>
+<section class="content" id="my-reviews" aria-labelledby="my-reviews-title" hidden>
+  <h2 id="my-reviews-title" tabindex="-1">Mes avis</h2>
+  <p class="muted">Vos notes et commentaires enregistrés dans ce navigateur.</p>
+  <p id="my-reviews-feedback" role="status"></p>
+  <div id="my-reviews-empty" class="tickets-empty" hidden>
+    <h3>Vous n’avez pas encore donné votre avis</h3>
+    <p>Retrouvez un film et partagez votre ressenti depuis sa fiche.</p>
+    <button type="button" class="primary" data-go="films">Découvrir les films</button>
+  </div>
+  <div id="my-reviews-list"></div>
+</section>
+<section class="content" id="profile" aria-labelledby="profile-title" hidden>
+  <h2 id="profile-title" tabindex="-1">Gérer mon compte</h2>
+  <form id="profile-form" class="settings-group">
+    <h3>Informations personnelles</h3>
+    <label for="profile-name">Nom affiché</label>
+    <input id="profile-name" name="name" type="text" autocomplete="name" maxlength="80" required>
+    <label for="profile-email">Adresse e-mail <span class="muted">(facultatif)</span></label>
+    <input id="profile-email" name="email" type="email" autocomplete="email" maxlength="254" placeholder="vous@exemple.fr">
+    <p class="muted profile-local">Ces informations sont enregistrées uniquement dans ce navigateur pour la démonstration.</p>
+    <button type="submit" class="primary">Enregistrer</button>
+    <p id="profile-feedback" role="status"></p>
+  </form>
+</section>
+<section class="content" id="settings" aria-labelledby="settings-title" hidden>
+  <h2 id="settings-title" tabindex="-1">Paramètres</h2>
+  <div class="settings-group" role="group" aria-labelledby="appearance-title">
+    <h3 id="appearance-title">Apparence</h3>
+    <div class="settings-options">
+      <label class="settings-option"><span>Système</span><input type="radio" name="appearance" value="system"></label>
+      <label class="settings-option"><span>Clair</span><input type="radio" name="appearance" value="light"></label>
+      <label class="settings-option"><span>Sombre</span><input type="radio" name="appearance" value="dark"></label>
+    </div>
+  </div>
+  <div class="settings-group" role="group" aria-labelledby="playback-title">
+    <h3 id="playback-title">Vidéo</h3>
+    <label class="settings-switch">
+      <span><strong id="autoplay-label">Lecture automatique</strong><small id="autoplay-description">Les extraits démarrent en muet sur l’accueil.</small></span>
+      <input type="checkbox" role="switch" id="autoplay-setting" aria-labelledby="autoplay-label" aria-describedby="autoplay-description">
+    </label>
+  </div>
+  <div class="settings-group" role="group" aria-labelledby="double-click-title">
+    <h3 id="double-click-title">Double-clic et double appui</h3>
+    <label class="double-click-label" for="double-click-mode">Reconnaissance</label>
+    <select id="double-click-mode" aria-describedby="double-click-description">
+      <option value="system">Système</option>
+      <option value="custom">Délai personnalisé</option>
+    </select>
+    <p class="muted" id="double-click-description">À la souris, utilise le double-clic reconnu par le navigateur. Sur écran tactile, le délai est de 500 ms.</p>
+    <div id="double-click-custom" hidden>
+      <label for="double-click-delay">Délai maximal <output id="double-click-value" for="double-click-delay">500 ms</output></label>
+      <input type="range" id="double-click-delay" min="200" max="1000" step="50" value="500" aria-label="Délai du double-clic en millisecondes">
+    </div>
+  </div>
+</section>
+</main>
+</div>
+<nav class="nav" aria-label="Navigation principale">
+  <button type="button" data-go="films" aria-current="page">
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <rect x="3" y="4" width="18" height="14" rx="2"/>
+      <path d="m10 8 5 3-5 3zM8 21h8"/>
+    </svg>
+    <span>À l’affiche</span>
+  </button>
+  <button type="button" data-go="tickets">
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4zM14 9v1m0 4v1"/>
+    </svg>
+    <span>Billets</span>
+  </button>
+  <button type="button" data-go="account">
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="8" r="3.5"/>
+      <path d="M5 20v-1a7 7 0 0 1 14 0v1"/>
+    </svg>
+    <span>Compte</span>
+  </button>
+</nav>
+</div>
+<div id="reservation-bar" class="reservation-bar" hidden>
+  <p id="reservation-summary" role="status"></p>
+  <button type="button" class="primary" id="reserve-session">Réserver <span aria-hidden="true">→</span></button>
+  <p class="reservation-hint">Continuez pour choisir vos sièges <span aria-hidden="true">↑</span></p>
+</div>
+<dialog id="apple-pay-sheet" aria-labelledby="apple-pay-title" aria-describedby="apple-pay-demo" data-state="ready">
+  <div class="wallet-grabber" aria-hidden="true"></div>
+  <div class="apple-pay-heading">
+    <h2 id="apple-pay-title" aria-label="Apple Pay"><svg class="apple-mark" viewBox="0 0 24 28" aria-hidden="true"><path d="M17.1 4.5c1-1.2 1.7-2.8 1.5-4.5-1.5.1-3.3 1-4.4 2.2-1 1.1-1.8 2.8-1.6 4.4 1.7.1 3.4-.8 4.5-2.1ZM21.8 14.7c0-3.2 2.6-4.8 2.7-4.9-1.5-2.2-3.8-2.5-4.7-2.5-2-.2-3.9 1.2-4.9 1.2-1 0-2.6-1.2-4.3-1.2-2.2 0-4.3 1.3-5.4 3.3-2.3 4-.6 9.9 1.6 13.1 1.1 1.6 2.3 3.4 4 3.3 1.6 0 2.2-1 4.2-1 1.9 0 2.5 1 4.2.9 1.8 0 2.8-1.6 3.8-3.2 1.3-1.8 1.8-3.6 1.8-3.7-.1 0-3.5-1.3-3.5-5.3Z" transform="translate(-2 0)"/></svg>Pay</h2>
+    <button type="button" id="apple-pay-cancel" aria-label="Fermer Apple Pay">×</button>
+  </div>
+  <p id="apple-pay-demo">Simulation · Aucun débit réel</p>
+  <div class="wallet-card-row">
+    <div class="wallet-card-art" aria-hidden="true"><span>DEMO</span><span class="wallet-card-digits">•••• 4242</span><i></i></div>
+    <div class="wallet-card-copy"><strong>Mastercard</strong><span>•••• 4242</span></div>
+    <span class="wallet-selected" aria-label="Carte sélectionnée">✓</span>
+  </div>
+  <div class="wallet-info-row"><span>TITULAIRE</span><strong id="wallet-holder">Lorem Ipsum</strong></div>
+  <div class="wallet-info-row"><span>ACHAT</span><strong id="wallet-purchase"></strong></div>
+  <div class="wallet-info-row"><span>SIÈGES</span><strong id="wallet-seats"></strong></div>
+  <div class="wallet-amount"><span>PAYER CINÉ LUMIÈRE</span><strong id="apple-pay-total"></strong></div>
+  <div class="wallet-auth">
+    <button type="button" id="apple-pay-confirm" aria-label="Simuler la confirmation Face ID">
+      <span class="wallet-face" aria-hidden="true">
+        <svg class="face-id-icon" viewBox="0 0 64 64"><path d="M20 7h-7a6 6 0 0 0-6 6v7m37-13h7a6 6 0 0 1 6 6v7M7 44v7a6 6 0 0 0 6 6h7m24 0h7a6 6 0 0 0 6-6v-7M22 23v6m20-6v6m-11-7v14h-4m-6 7c6 6 16 6 22 0"/></svg>
+        <svg class="wallet-check" viewBox="0 0 64 64"><circle cx="32" cy="32" r="26"/><path d="m20 32 8 8 16-17"/></svg>
+        <span class="wallet-spinner"></span><span class="wallet-scan"></span>
+      </span>
+      <span id="wallet-auth-label">Confirmer avec Face ID</span>
+    </button>
+    <p id="apple-pay-feedback" role="status">Touchez Face ID pour simuler la confirmation.</p>
+  </div>
+  <button type="button" class="wallet-side-button" id="wallet-side-button" aria-label="Simuler le double appui sur le bouton latéral"><span aria-hidden="true">››</span></button>
+</dialog>
+<dialog id="review-editor" aria-labelledby="review-editor-title">
+  <h2 id="review-editor-title">Modifier mon avis</h2>
+  <p id="review-editor-film"></p>
+  <form id="managed-review-form">
+    <label for="managed-review-comment">Votre commentaire <span class="muted">(facultatif)</span></label>
+    <textarea id="managed-review-comment" maxlength="1500" rows="4"></textarea>
+    <p id="managed-review-feedback" role="status"></p>
+    <div class="review-actions"><button type="button" id="managed-review-cancel">Annuler</button><button type="submit" class="primary">Enregistrer</button></div>
+  </form>
+</dialog>
+<dialog id="cancel-confirmation" aria-labelledby="cancel-title" aria-describedby="cancel-description">
+  <h2 id="cancel-title">Annuler ce billet ?</h2>
+  <p id="cancel-description"></p>
+  <form method="dialog" class="cancel-actions">
+    <button value="keep" autofocus>Conserver mon billet</button>
+    <button value="confirm" class="primary">Confirmer l’annulation</button>
+  </form>
+</dialog>
+<script src="film-reviews.js?v=my-reviews-1"></script>
+<script src="auditorium-3d.js?v=immersive-seats-9"></script>
+<script>
+const pageStage = document.querySelector('.app > .page-stage');
+const pageMain = pageStage.querySelector('main');
+const views = [...pageMain.querySelectorAll(':scope > section')];
+const nav = document.querySelector('.nav');
+const tabs = [...nav.querySelectorAll('button')];
+const pageBack = document.querySelector('#page-back');
+const total = document.querySelector('#total');
+const feedback = document.querySelector('#feedback');
+const pay = document.querySelector('#pay');
+const ticketStatus = document.querySelector('#ticket-status');
+let attempted = false;
+let selectedSession;
+let selectedScreeningFilm;
+const bookingSession = document.querySelector('#booking-session');
+const cancelTicket = document.querySelector('#cancel');
+let ticketActive = false;
+
+const films = document.querySelector('#films');
+const reel = document.querySelector('.film-reel');
+const slides = [...reel.querySelectorAll('.hero')];
+function cloneForLoop(slide) {
+  const clone = slide.cloneNode(true);
+  clone.querySelector('video')?.remove();
+  clone.inert = true;
+  clone.setAttribute('aria-hidden', 'true');
+  return clone;
+}
+const previousLoopSlide = cloneForLoop(slides.at(-1));
+const nextLoopSlide = cloneForLoop(slides[0]);
+reel.prepend(previousLoopSlide);
+reel.append(nextLoopSlide);
+const reelSlides = [previousLoopSlide, ...slides, nextLoopSlide];
+const reelToggle = document.querySelector('#reel-toggle');
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+const searchView = document.querySelector('#search');
+const catalogSearch = document.querySelector('#catalog-search');
+const catalogList = document.querySelector('#catalog-list');
+const catalogEmpty = document.querySelector('#catalog-empty');
+function savedSetting(key) {
+  try { return localStorage.getItem('cine-lumiere.' + key); } catch { return null; }
+}
+function saveSetting(key, value) {
+  try { localStorage.setItem('cine-lumiere.' + key, value); } catch {}
+}
+let autoplayEnabled = savedSetting('autoplay') !== 'off';
+function autoplayAllowed() { return autoplayEnabled && !reducedMotion.matches; }
+let playing = autoplayAllowed();
+
+let filmTransition;
+let queuedNavigation;
+let tabDrag;
+let activeSlide = 0;
+const reelVideos = slides.map(slide => slide.querySelector('.hero-video'));
+let playingVideo;
+let playbackAttempt;
+let currentVideo;
+let detailMedia;
+let detailWantsPlayback = false;
+let bookingMedia;
+let bookingWantsPlayback = false;
+let tapPausedVideo;
+let pendingTap;
+let nativeClick;
+let reelPointerType = 'mouse';
+let doubleClickMode = savedSetting('double-click-mode') === 'custom' ? 'custom' : 'system';
+const savedDoubleClickDelay = Number(savedSetting('double-click-delay'));
+let doubleClickDelay = savedDoubleClickDelay >= 200 && savedDoubleClickDelay <= 1000
+  ? Math.round(savedDoubleClickDelay / 50) * 50 : 500;
+let feedbackAnimation;
+const feedbackIcon = document.querySelector('#playback-feedback');
+const reelProgress = document.querySelector('#reel-progress');
+const scrollHint = document.querySelector('#scroll-hint');
+const hintedVideos = new WeakSet();
+let swipeLearned = savedSetting('swipe-learned') === 'yes';
+let hintTimer;
+let hintFade;
+let doubleTapHintShown = false;
+let doubleTapLearned = false;
+const ambience = document.createElement('canvas');
+ambience.className = 'video-ambience';
+ambience.setAttribute('aria-hidden', 'true');
+const ambienceContext = ambience.getContext('2d');
+let ambienceVideo;
+let ambienceFrame;
+for (const video of reelVideos) {
+  video.addEventListener('playing', () => {
+    video.dataset.ready = '';
+  });
+  for (const event of ['loadedmetadata', 'durationchange', 'timeupdate', 'seeked']) {
+    video.addEventListener(event, () => {
+      if (video === currentVideo) {
+        updateReelProgress();
+        if (event === 'timeupdate' && !films.hidden && !video.paused && Number.isFinite(video.duration) &&
+            video.currentTime >= Math.max(video.duration * .75, video.duration - 12)) {
+          promptFilmSwipe(video);
+        }
+        if (event === 'timeupdate' && video === reelVideos[0] && !films.hidden && !video.paused &&
+            video.currentTime >= 3 && !doubleTapHintShown && !doubleTapLearned && !hintedVideos.has(video)) {
+          doubleTapHintShown = true;
+          showGestureHint('tap');
+        }
+      }
+    });
+  }
+  video.addEventListener('ended', () => {
+    if (video === detailMedia || video === bookingMedia) {
+      video.currentTime = 0;
+      if (playingVideo === video) video.play().catch(() => {});
+      return;
+    }
+    if (video !== currentVideo) return;
+    promptFilmSwipe(video);
+    video.currentTime = 0;
+    updateReelProgress();
+    if (playingVideo === video) video.play().catch(() => {});
+  });
+}
+let reelDrag;
+let tabSwipe;
+let settleFrame;
+let suppressClick = false;
+let ignoreReelTapUntil = 0;
+const reelViewport = window.visualViewport;
+
+
+
+function hideScrollHint() {
+  clearTimeout(hintTimer);
+  hintFade?.cancel();
+  hintFade = undefined;
+  scrollHint.hidden = true;
+}
+const dismissedHintClicks = new WeakSet();
+let hintDismissPointer;
+function isHintAction(target) {
+  return Boolean(target.closest('button,a,input,select,textarea,label,summary,[role="button"]'));
+}
+document.addEventListener('pointerdown', event => {
+  hintDismissPointer = !scrollHint.hidden && !isHintAction(event.target)
+    ? {id:event.pointerId,x:event.clientX,y:event.clientY} : undefined;
+  hideScrollHint();
+}, {capture:true,passive:true});
+document.addEventListener('pointercancel', () => { hintDismissPointer = undefined; }, {capture:true});
+document.addEventListener('click', event => {
+  const dismissedOnPress = hintDismissPointer && event.detail > 0 &&
+    (event.pointerId === undefined || event.pointerId === hintDismissPointer.id) &&
+    Math.hypot(event.clientX-hintDismissPointer.x,event.clientY-hintDismissPointer.y) <= 44;
+  const shouldIgnore = !isHintAction(event.target) && (!scrollHint.hidden || dismissedOnPress);
+  hintDismissPointer = undefined;
+  hideScrollHint();
+  if (!shouldIgnore) return;
+  dismissedHintClicks.add(event);
+  event.preventDefault();
+  if (!reel.contains(event.target)) event.stopPropagation();
+}, {capture:true});
+function fadeScrollHint() {
+  if (scrollHint.hidden || reducedMotion.matches) {
+    hideScrollHint();
+    return;
+  }
+  hintFade = scrollHint.animate([{opacity:1}, {opacity:0}], {duration:250, easing:'ease-out', fill:'forwards'});
+  const fade = hintFade;
+  fade.finished.then(() => {
+    if (hintFade === fade) hideScrollHint();
+  }, () => {});
+}
+function showGestureHint(gesture) {
+  hideScrollHint();
+  scrollHint.dataset.gesture = gesture;
+  const tap = gesture === 'tap';
+  document.querySelector('#gesture-hint-title').textContent = tap ? 'Passez en mode immersif' : 'Le prochain film vous attend';
+  document.querySelector('#gesture-hint-description').textContent = tap
+    ? 'Double-cliquez ou touchez deux fois la vidéo.'
+    : 'Glissez vers le haut pour découvrir le film suivant.';
+  scrollHint.hidden = false;
+  hintTimer = setTimeout(fadeScrollHint, tap ? 10000 : 12000);
+}
+function promptFilmSwipe(video) {
+  if (swipeLearned || films.hidden || hintedVideos.has(video)) return;
+  hintedVideos.add(video);
+  showGestureHint('swipe');
+}
+function updateReelProgress() {
+  const duration = currentVideo?.duration;
+  const available = Number.isFinite(duration) && duration > 0;
+  const fraction = available ? Math.min(1, currentVideo.currentTime / duration) : 0;
+  reelProgress.disabled = !available;
+  reelProgress.value = Math.round(fraction * 1000);
+  reelProgress.style.setProperty('--progress', fraction * 100 + '%');
+  if (available) reelProgress.setAttribute('aria-valuetext', Math.floor(currentVideo.currentTime) + ' secondes sur ' + Math.floor(duration));
+  else reelProgress.removeAttribute('aria-valuetext');
+}
+reelProgress.addEventListener('input', () => {
+  if (!currentVideo || !Number.isFinite(currentVideo.duration)) return;
+  const target = Number(reelProgress.value) * currentVideo.duration / 1000;
+  currentVideo.currentTime = Math.min(target, Math.max(0, currentVideo.duration - .15));
+  updateReelProgress();
+});
+function renderPlaybackControls() {
+  reelToggle.hidden = !currentVideo;
+  reelToggle.setAttribute('aria-label', playing && !tapPausedVideo ? 'Mettre la vidéo en pause' : 'Relancer la vidéo');
+  document.querySelector('#reel-pause').toggleAttribute('hidden', !playing || Boolean(tapPausedVideo));
+  document.querySelector('#reel-play').toggleAttribute('hidden', playing && !tapPausedVideo);
+}
+function syncPlayback() {
+  updateReelPlayback();
+  renderPlaybackControls();
+}
+function updateReelPlayback() {
+  const video = films.hidden ? undefined : reelVideos[activeSlide];
+  if (video !== currentVideo) {
+    clearPendingTap();
+    hideScrollHint();
+    setFilmFocus(false);
+    feedbackAnimation?.cancel();
+    feedbackIcon.hidden = true;
+    tapPausedVideo = undefined;
+    currentVideo = video;
+    if (!autoplayAllowed()) playing = false;
+    syncAmbience(video);
+    renderPlaybackControls();
+    if (video) {
+      video.currentTime = 0;
+      delete video.dataset.ready;
+    }
+    updateReelProgress();
+  }
+  const next = document.hidden ? undefined : bookingMedia
+    ? (bookingWantsPlayback ? bookingMedia : undefined)
+    : detailMedia
+    ? (detailWantsPlayback ? detailMedia : undefined)
+    : (playing && video !== tapPausedVideo && !filmTransition ? video : undefined);
+  if (next !== playingVideo) {
+    playbackAttempt = undefined;
+    playingVideo?.pause();
+    playingVideo = next;
+  }
+  if (!next || !next.paused || playbackAttempt?.video === next) return;
+  if (next.ended) next.currentTime = 0;
+  next.muted = true;
+  const attempt = {video:next};
+  playbackAttempt = attempt;
+  next.play().then(() => {
+    if (playbackAttempt === attempt) playbackAttempt = undefined;
+  }, () => {
+    if (playbackAttempt !== attempt) return;
+    playbackAttempt = undefined;
+    if (next === bookingMedia) {
+      bookingWantsPlayback = false;
+      updateReelPlayback();
+    }
+  });
+}
+function clearPendingTap() {
+  clearTimeout(pendingTap?.timer);
+  pendingTap = undefined;
+  nativeClick = undefined;
+}
+function stopAmbience() {
+  if (ambienceVideo) {
+    if (ambienceVideo.cancelVideoFrameCallback) ambienceVideo.cancelVideoFrameCallback(ambienceFrame);
+    else cancelAnimationFrame(ambienceFrame);
+    ambienceVideo = undefined;
+  }
+  ambience.remove();
+}
+function setFilmFocus(focused) {
+  films.classList.toggle('is-focused', focused);
+  films.closest('.app').classList.toggle('is-film-focused', focused);
+}
+function syncAmbience(video) {
+  if (ambienceVideo === video) return;
+  stopAmbience();
+  if (!video || !ambienceContext) return;
+  ambienceVideo = video;
+  video.before(ambience);
+  // Sample the same decoded frame so the blurred margins stay in sync, even on pause.
+  function paint() {
+    if (ambienceVideo !== video) return;
+    if (video.readyState >= 2 && video.videoWidth) {
+      const scale = Math.min(1, 320 / Math.max(video.videoWidth, video.videoHeight));
+      const width = Math.max(1, Math.round(video.videoWidth * scale));
+      const height = Math.max(1, Math.round(video.videoHeight * scale));
+      if (ambience.width !== width || ambience.height !== height) {
+        ambience.width = width;
+        ambience.height = height;
+      }
+      ambienceContext.drawImage(video, 0, 0, width, height);
+    }
+    ambienceFrame = video.requestVideoFrameCallback
+      ? video.requestVideoFrameCallback(paint)
+      : requestAnimationFrame(paint);
+  }
+  paint();
+}
+function showPlaybackFeedback(paused) {
+  feedbackAnimation?.cancel();
+  document.querySelector('#feedback-symbol').setAttribute(
+    'd', paused ? 'M7 5h4v14H7zm6 0h4v14h-4z' : 'm8 5 12 7-12 7z'
+  );
+  feedbackIcon.hidden = false;
+  feedbackAnimation = feedbackIcon.animate(
+    [{opacity:0,transform:'scale(.82)'},{opacity:1,transform:'scale(1)',offset:.2},
+     {opacity:1,offset:.56},{opacity:0,transform:'scale(1.12)'}],
+    {duration:reducedMotion.matches ? 1 : 520, easing:'ease-out'}
+  );
+  feedbackAnimation.onfinish = () => { feedbackIcon.hidden = true; };
+}
+function toggleFilmPlayback(video) {
+  if (video !== currentVideo) return;
+  if (!video.paused) {
+    tapPausedVideo = video;
+  } else {
+    tapPausedVideo = undefined;
+    playing = true;
+    if (video.ended) video.currentTime = 0;
+    // A direct gesture can retry playback even if automatic playback was blocked.
+    playingVideo = undefined;
+  }
+  syncPlayback();
+  showPlaybackFeedback(tapPausedVideo === video);
+}
+function canUseReelTap(event) {
+  return !reelZoomed() && performance.now() >= ignoreReelTapUntil &&
+    !event.target.closest('button, a, input') && event.detail !== 0 && Boolean(currentVideo);
+}
+function toggleImmersiveView() {
+  clearPendingTap();
+  doubleTapLearned = true;
+  hideScrollHint();
+  setFilmFocus(!films.classList.contains('is-focused'));
+}
+reel.addEventListener('pointerdown', event => { reelPointerType = event.pointerType; }, {capture:true});
+reel.addEventListener('click', event => {
+  if (!canUseReelTap(event)) return;
+  const pointerType = event.pointerType || reelPointerType;
+  if (doubleClickMode === 'system' && pointerType === 'mouse') {
+    if (event.detail !== 1) return;
+    clearPendingTap();
+    const video = currentVideo;
+    nativeClick = {video, wasPlaying:!video.paused};
+    if (dismissedHintClicks.has(event)) return;
+    pendingTap = {timer:setTimeout(() => {
+      pendingTap = undefined;
+      toggleFilmPlayback(video);
+    }, 500)};
+    return;
+  }
+  const {clientX:x, clientY:y} = event;
+  const delay = doubleClickMode === 'custom' ? doubleClickDelay : 500;
+  if (pendingTap && event.timeStamp - pendingTap.time <= delay && Math.hypot(x - pendingTap.x, y - pendingTap.y) <= 44) {
+    toggleImmersiveView();
+    return;
+  }
+  clearPendingTap();
+  const video = currentVideo;
+  const dismissOnly = dismissedHintClicks.has(event);
+  pendingTap = {x, y, time:event.timeStamp, timer:setTimeout(() => {
+    pendingTap = undefined;
+    if (!dismissOnly) toggleFilmPlayback(video);
+  }, delay)};
+});
+reel.addEventListener('dblclick', event => {
+  if (doubleClickMode !== 'system' || (event.pointerType || reelPointerType) !== 'mouse' || !canUseReelTap(event)) return;
+  event.preventDefault();
+  if (nativeClick?.video === currentVideo) {
+    playing = nativeClick.wasPlaying;
+    tapPausedVideo = nativeClick.wasPlaying ? undefined : currentVideo;
+    syncPlayback();
+    feedbackAnimation?.cancel();
+    feedbackIcon.hidden = true;
+  }
+  toggleImmersiveView();
+});
+function stopSettling() {
+  if (settleFrame !== undefined) cancelAnimationFrame(settleFrame);
+  settleFrame = undefined;
+}
+function slideTop(index) {
+  return reelSlides[index + 1].offsetTop - previousLoopSlide.offsetTop;
+}
+function goToSlide(index) {
+  stopSettling();
+  reel.scrollTop = slideTop(index);
+  for (const [position, slide] of slides.entries()) slide.inert = position !== index;
+}
+function finishReelStep(index) {
+  const nextSlide = (index + slides.length) % slides.length;
+  if (nextSlide !== activeSlide && !swipeLearned) {
+    swipeLearned = true;
+    saveSetting('swipe-learned', 'yes');
+  }
+  activeSlide = nextSlide;
+  goToSlide(activeSlide);
+  updateReelPlayback();
+}
+function searchKey(text) {
+  return text.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLocaleLowerCase('fr').trim();
+}
+const catalogEntries = slides.map(slide => {
+  const title = slide.querySelector('h1, h2').textContent;
+  const details = slide.querySelector('.eyebrow').textContent;
+  const entry = document.createElement('li');
+  const button = document.createElement('button');
+  const subtitle = document.createElement('small');
+  button.type = 'button';
+  button.className = 'catalog-choice';
+  const poster = document.createElement('img');
+  poster.src = slide.querySelector('.film-poster').getAttribute('src');
+  poster.alt = '';
+  const copy = document.createElement('span');
+  copy.textContent = title;
+  subtitle.textContent = details;
+  const rating = document.createElement('small');
+  rating.className = 'film-rating';
+  rating.dataset.reviewFilm = slide.dataset.filmSource;
+  copy.append(subtitle, rating);
+  button.append(poster, copy);
+  entry.append(button);
+  catalogList.append(entry);
+  button.addEventListener('click', () => {
+    openFilmDetail(slide, button);
+  });
+  return {entry, button, key: searchKey(title + ' ' + details)};
+});
+window.CinemaReviews.refreshRatings();
+const resultFades = new WeakMap();
+const resultMoves = new WeakMap();
+const resultRows = [...catalogEntries.map(({entry}) => entry), catalogEmpty];
+
+function reflowResults(update) {
+  const positions = new Map();
+  if (!reducedMotion.matches) {
+    for (const row of resultRows) {
+      if (!row.hidden && row.animate) positions.set(row, row.getBoundingClientRect().top);
+    }
+  }
+  for (const row of resultRows) {
+    resultMoves.get(row)?.cancel();
+    resultMoves.delete(row);
+  }
+  update();
+  for (const [row, top] of positions) {
+    if (row.hidden) continue;
+    const offset = top - row.getBoundingClientRect().top;
+    if (Math.abs(offset) < .5) continue;
+    const move = row.animate(
+      [{transform:`translateY(${offset}px)`}, {transform:'translateY(0)'}],
+      {duration:210, easing:'cubic-bezier(.22,1,.36,1)'}
+    );
+    resultMoves.set(row, move);
+  }
+}
+function setResultVisibility(element, visible) {
+  const previous = resultFades.get(element);
+  if (previous?.visible === visible && !reducedMotion.matches) return;
+  if (!previous && element.hidden === !visible) return;
+  const opacity = element.hidden ? 0 : Number(getComputedStyle(element).opacity);
+  previous?.animation.cancel();
+  resultFades.delete(element);
+
+  element.inert = !visible;
+  if (reducedMotion.matches || !element.animate) {
+    element.hidden = !visible;
+    return;
+  }
+  element.hidden = false;
+  const animation = element.animate(
+    [{opacity}, {opacity:visible ? 1 : 0}],
+    {duration:130, easing:'ease-out', fill:'forwards'}
+  );
+  resultFades.set(element, {visible, animation});
+  animation.onfinish = () => {
+    if (resultFades.get(element)?.animation !== animation) return;
+    resultFades.delete(element);
+    if (!visible) reflowResults(() => { element.hidden = true; });
+    animation.cancel();
+  };
+}
+function filterCatalog() {
+  const words = searchKey(catalogSearch.value).split(/\s+/);
+  reflowResults(() => {
+    let hasResults = false;
+    for (const {entry, key} of catalogEntries) {
+      const matches = words.every(word => key.includes(word));
+      hasResults ||= matches;
+      setResultVisibility(entry, matches);
+    }
+    setResultVisibility(catalogEmpty, !hasResults);
+  });
+}
+const searchTrigger = document.querySelector('#search-trigger');
+const searchField = document.querySelector('#search-field');
+const resultsPanel = document.querySelector('#film-results');
+
+function openSearch() {
+  if (filmTransition) {
+    queuedNavigation = openSearch;
+    return;
+  }
+  if (films.hidden) return;
+  searchView.style.setProperty('--search-cover', getComputedStyle(slides[activeSlide]).getPropertyValue('--cover'));
+  moveBetweenFilmViews(
+    [[searchTrigger, 'search-control']],
+    [[searchField, 'search-control'], [resultsPanel, 'search-content']],
+    () => showView('search'),
+    () => {
+      if (!searchView.hidden && document.activeElement.id === 'search-title') {
+        catalogSearch.focus({preventScroll:true});
+      }
+    }
+  );
+}
+function returnFromSearch() {
+  moveBetweenFilmViews(
+    [[searchField, 'search-control'], [resultsPanel, 'search-content']],
+    [[searchTrigger, 'search-control']],
+    () => {
+      showView('films');
+      searchTrigger.focus({preventScroll:true});
+    }
+  );
+}
+searchTrigger.addEventListener('click', openSearch);
+catalogSearch.addEventListener('input', filterCatalog);
+catalogSearch.addEventListener('keydown', event => {
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    navigateView('films');
+  }
+});
+reel.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && films.classList.contains('is-focused')) {
+    setFilmFocus(false);
+    return;
+  }
+  if (event.target !== reel) return;
+  if (event.code === 'Space') {
+    event.preventDefault();
+    if (currentVideo) toggleFilmPlayback(currentVideo);
+    return;
+  }
+  const direction = ['ArrowDown', 'PageDown'].includes(event.key) ? 1 :
+    ['ArrowUp', 'PageUp'].includes(event.key) ? -1 : 0;
+  if (!direction || reelZoomed() || reelDrag) return;
+  event.preventDefault();
+  settleAfterDrag(activeSlide + direction);
+});
+let wheelDistance = 0;
+let wheelUsed = false;
+let wheelReset;
+function adjacentTab(page, direction) {
+  const index = tabs.findIndex(tab => tab.dataset.go === page.id);
+  const target = tabs[index + direction];
+  return target ? document.getElementById(target.dataset.go) : undefined;
+}
+function parentPage(id) {
+  return {
+    search:'films', detail:detailSearchResult ? 'search' : 'films',
+    booking:'detail', payment:'booking', settings:'account', profile:'account', 'my-reviews':'account'
+  }[id];
+}
+function turnTab(page, direction) {
+  const target = adjacentTab(page, direction);
+  if (target) navigateView(target.id);
+}
+function clearTabPreview() {
+  const preview = tabDrag?.preview;
+  if (!preview) return;
+  preview.inert = false;
+  preview.classList.remove('tab-preview');
+  preview.style.removeProperty('top');
+  preview.style.removeProperty('transform');
+}
+function clearTabDrag() {
+  clearTabPreview();
+  tabDrag?.page.classList.remove('tab-outgoing');
+  tabDrag?.page.style.removeProperty('transform');
+  tabDrag = undefined;
+  pageMain.classList.remove('is-tab-dragging');
+  pageStage.classList.remove('is-moving');
+}
+function pageOffset(x) {
+  return `translateX(${x}px)`;
+}
+function paintPageDrag({page, preview, previewStart}, x) {
+  page.style.transform = pageOffset(x);
+  if (preview) preview.style.transform = pageOffset(previewStart + x / 4);
+}
+function panTabs(page, delta) {
+  if (filmTransition) return;
+  const width = tabDrag?.width ?? pageMain.clientWidth;
+  if (!width) return;
+  const direction = delta < 0 ? 1 : -1;
+  const parent = parentPage(page.id);
+  const preview = parent
+    ? (delta > 0 ? document.getElementById(parent) : undefined)
+    : (delta ? adjacentTab(page, direction) : undefined);
+  const x = Math.max(-width, Math.min(width, preview ? delta : delta * .16));
+  const previewStart = direction * width / 4;
+  if (reducedMotion.matches) {
+    tabDrag = {page, preview, previewStart, x, width};
+    return;
+  }
+  pageMain.classList.add('is-tab-dragging');
+  pageStage.classList.add('is-moving');
+  page.classList.add('tab-outgoing');
+  if (tabDrag?.preview !== preview) {
+    clearTabPreview();
+    if (preview) {
+      const top = ['films','search','detail'].includes(preview.id)
+        ? 0 : document.querySelector('.app > header').getBoundingClientRect().bottom;
+      preview.style.top = top - pageMain.getBoundingClientRect().top + 'px';
+      preview.inert = true;
+      preview.classList.add('tab-preview');
+      if (preview === films) goToSlide(activeSlide);
+      if (preview.id === 'account') updateAccountSummary();
+    }
+  }
+  tabDrag = {page, preview, previewStart, x, width};
+  paintPageDrag(tabDrag, x);
+}
+function settleTabDrag(accept, commit = false) {
+  if (!tabDrag) return;
+  const drag = tabDrag;
+  const {page, preview, x, width} = drag;
+  const target = accept && (commit || Math.abs(x) >= Math.min(90, width * .22)) ? preview : undefined;
+  const finish = () => {
+    clearTabDrag();
+    if (target) {
+      showView(target.id);
+      if (page.id === 'detail' && target.id === 'search') detailSearchResult.focus();
+      if (page.id === 'search' && target.id === 'films') searchTrigger.focus({preventScroll:true});
+    }
+    finishFilmTransition();
+  };
+  if (reducedMotion.matches) {
+    finish();
+    return;
+  }
+  const end = target ? Math.sign(x) * width : 0;
+  const started = performance.now();
+  filmTransition = drag;
+  function frame(now) {
+    const progress = Math.min(1, Math.max(0, (now - started) / 230));
+    const eased = 1 - (1 - progress) ** 3;
+    paintPageDrag(drag, x + (end - x) * eased);
+    if (progress < 1) requestAnimationFrame(frame);
+    else finish();
+  }
+  requestAnimationFrame(frame);
+}
+function handleTabWheel(event, page) {
+  if (event.ctrlKey || reelZoomed()) return;
+  const sideways = Math.abs(event.deltaX) > Math.abs(event.deltaY);
+  if (!sideways && page !== films) return;
+  event.preventDefault();
+  clearTimeout(wheelReset);
+  wheelReset = setTimeout(() => { wheelDistance = 0; wheelUsed = false; }, 170);
+  if (wheelUsed || settleFrame !== undefined || reelDrag) return;
+  wheelDistance += (sideways ? event.deltaX : event.deltaY) *
+    (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? reel.clientHeight : 1);
+  if (Math.abs(wheelDistance) < 28) return;
+  wheelUsed = true;
+  const direction = Math.sign(wheelDistance);
+  if (sideways) turnTab(page, direction);
+  else settleAfterDrag(activeSlide + direction);
+}
+function usesNativeGesture(target) {
+  return target.closest('input, textarea, select, [contenteditable]');
+}
+films.addEventListener('wheel', event => handleTabWheel(event, films), {passive:false});
+films.addEventListener('pointerdown', event => {
+  if (!event.isPrimary || event.button !== 0) return;
+  if (filmTransition || reelZoomed() || settleFrame !== undefined || usesNativeGesture(event.target)) return;
+  reelDrag = {pointer:event.pointerId, x:event.clientX, y:event.clientY, axis:undefined};
+});
+window.addEventListener('pointermove', event => {
+  if (reelDrag?.pointer !== event.pointerId || reelZoomed()) return;
+  const vertical = reelDrag.y - event.clientY;
+  const horizontal = Math.abs(reelDrag.x - event.clientX);
+  if (!reelDrag.axis) {
+    if (Math.max(Math.abs(vertical), horizontal) < 12) return;
+    reelDrag.axis = horizontal > Math.abs(vertical) ? 'x' : 'y';
+    hideScrollHint();
+    reel.classList.add('is-dragging');
+    pageMain.setPointerCapture(event.pointerId);
+    clearPendingTap();
+  }
+  if (reelDrag.axis === 'x') {
+    panTabs(films, event.clientX - reelDrag.x);
+    return;
+  }
+  const top = slideTop(activeSlide) + vertical;
+  reel.scrollTop = Math.max(slideTop(activeSlide - 1), Math.min(slideTop(activeSlide + 1), top));
+});
+function releaseReelDrag() {
+  const pointer = reelDrag?.pointer;
+  reelDrag = undefined;
+  reel.classList.remove('is-dragging');
+  if (pointer !== undefined && pageMain.hasPointerCapture(pointer)) pageMain.releasePointerCapture(pointer);
+}
+function finishReelDrag(event) {
+  if (reelDrag?.pointer !== event.pointerId) return;
+  if (event.type === 'lostpointercapture' && event.target !== pageMain) return;
+  const {axis, x, y} = reelDrag;
+  releaseReelDrag();
+  if (!axis) return;
+  suppressClick = true;
+  if (axis === 'x') {
+    if (event.type === 'pointerup') panTabs(films, event.clientX - x);
+    settleTabDrag(event.type === 'pointerup');
+    return;
+  }
+  const delta = y - event.clientY;
+  const threshold = Math.min(70, reel.clientHeight * .12);
+  const direction = event.type === 'pointerup' && Math.abs(delta) >= threshold ? Math.sign(delta) : 0;
+  settleAfterDrag(activeSlide + direction);
+}
+function settleAfterDrag(index) {
+  if (settleFrame !== undefined || reelZoomed()) return;
+  const from = reel.scrollTop;
+  const to = slideTop(index);
+  if (reducedMotion.matches || from === to) {
+    finishReelStep(index);
+    return;
+  }
+  const duration = Math.min(350, Math.max(160, Math.abs(to - from) * .48));
+  let started;
+  function frame(now) {
+    started ??= now;
+    const progress = Math.min(1, (now - started) / duration);
+    const eased = 1 - (1 - progress) ** 3;
+    reel.scrollTop = from + (to - from) * eased;
+    if (progress < 1) settleFrame = requestAnimationFrame(frame);
+    else {
+      settleFrame = undefined;
+      finishReelStep(index);
+    }
+  }
+  settleFrame = requestAnimationFrame(frame);
+}
+window.addEventListener('pointerup', finishReelDrag);
+window.addEventListener('pointercancel', finishReelDrag);
+pageMain.addEventListener('lostpointercapture', finishReelDrag);
+pageMain.addEventListener('pointerdown', event => {
+  if (event.isPrimary) suppressClick = false;
+}, true);
+pageMain.addEventListener('click', event => {
+  if (!suppressClick || event.detail === 0) return;
+  suppressClick = false;
+  event.preventDefault();
+  event.stopPropagation();
+}, true);
+pageMain.addEventListener('dragstart', event => {
+  if (!usesNativeGesture(event.target)) event.preventDefault();
+});
+new ResizeObserver(() => {
+  if (!films.hidden && !reelDrag && settleFrame === undefined && !reelZoomed()) goToSlide(activeSlide);
+}).observe(reel);
+function reelZoomed() {
+  return (reelViewport?.scale ?? 1) > 1.02;
+}
+function syncReelZoom() {
+  const root = document.documentElement;
+  const zoomed = reelZoomed();
+  if (root.hasAttribute('data-reel-zoom') === zoomed) return;
+  root.toggleAttribute('data-reel-zoom', zoomed);
+  clearPendingTap();
+  releaseReelDrag();
+  releaseTabSwipe();
+  if (tabDrag && !filmTransition) clearTabDrag();
+  stopSettling();
+  if (!zoomed && !films.hidden) goToSlide(activeSlide);
+}
+document.addEventListener('touchstart', event => {
+  if (event.touches.length < 2) return;
+  releaseTabSwipe();
+  if (tabDrag && !filmTransition) clearTabDrag();
+  ignoreReelTapUntil = performance.now() + 450;
+  releaseReelDrag();
+  clearPendingTap();
+}, {passive:true,capture:true});
+reelViewport?.addEventListener('resize', syncReelZoom);
+reel.addEventListener('focusin', updateReelPlayback);
+reel.addEventListener('focusout', () => setTimeout(updateReelPlayback, 0));
+document.addEventListener('visibilitychange', updateReelPlayback);
+reelToggle.addEventListener('click', () => {
+  playing = !playing || Boolean(tapPausedVideo);
+  tapPausedVideo = undefined;
+  syncPlayback();
+});
+reducedMotion.addEventListener('change', () => {
+  playing = autoplayAllowed();
+  syncPlayback();
+});
+goToSlide(0);
+syncReelZoom();
+syncPlayback();
+
+for (const page of views) {
+  if (page === films) continue;
+  if (tabs.some(tab => tab.dataset.go === page.id)) {
+    page.addEventListener('wheel', event => handleTabWheel(event, page), {passive:false});
+  }
+  page.addEventListener('pointerdown', event => {
+    if (!event.isPrimary || event.button !== 0 || filmTransition || reelZoomed() || usesNativeGesture(event.target) ||
+        event.target.closest('.screening-track,.seat-map-scroll,#auditorium-canvas')) return;
+    tabSwipe = {page, id:event.pointerId, x:event.clientX, y:event.clientY, active:false};
+  });
+}
+function releaseTabSwipe() {
+  const pointer = tabSwipe?.id;
+  tabSwipe = undefined;
+  if (pointer !== undefined && pageMain.hasPointerCapture(pointer)) pageMain.releasePointerCapture(pointer);
+}
+window.addEventListener('pointermove', event => {
+  if (tabSwipe?.id !== event.pointerId || reelZoomed()) return;
+  const {page} = tabSwipe;
+  const x = event.clientX - tabSwipe.x;
+  const y = event.clientY - tabSwipe.y;
+  if (!tabSwipe.active) {
+    if (Math.abs(y) >= 12 && Math.abs(y) > Math.abs(x)) {
+      releaseTabSwipe();
+      return;
+    }
+    if (Math.abs(x) < 12 || Math.abs(x) < Math.abs(y)) return;
+    if (x < 0 && parentPage(page.id)) {
+      releaseTabSwipe();
+      return;
+    }
+    tabSwipe.active = true;
+    pageMain.setPointerCapture(event.pointerId);
+  }
+  panTabs(page, x);
+});
+function finishTabSwipe(event) {
+  if (tabSwipe?.id !== event.pointerId) return;
+  if (event.type === 'lostpointercapture' && event.target !== pageMain) return;
+  const start = tabSwipe;
+  releaseTabSwipe();
+  if (!start.active) return;
+  suppressClick = true;
+  const accept = event.type === 'pointerup' && !reelZoomed();
+  if (accept) panTabs(start.page, event.clientX - start.x);
+  settleTabDrag(accept);
+}
+window.addEventListener('pointerup', finishTabSwipe);
+window.addEventListener('pointercancel', finishTabSwipe);
+pageMain.addEventListener('lostpointercapture', finishTabSwipe);
+
+function finishFilmTransition() {
+  filmTransition = undefined;
+  updateReelPlayback();
+  const next = queuedNavigation;
+  queuedNavigation = undefined;
+  next?.();
+}
+function navigateView(id) {
+  if (filmTransition) {
+    queuedNavigation = () => navigateView(id);
+    return;
+  }
+  if (tabDrag) clearTabDrag();
+  const from = views.find(view => !view.hidden)?.id;
+  if (from === id) return;
+  if (id === 'films' && from === 'search') {
+    returnFromSearch();
+    return;
+  }
+  if (id === 'films' && from === 'detail') {
+    returnToFilm();
+    return;
+  }
+  if (reducedMotion.matches || reelZoomed()) {
+    showView(id);
+    return;
+  }
+  const fromTab = tabs.findIndex(tab => tab.dataset.go === from);
+  const toTab = tabs.findIndex(tab => tab.dataset.go === id);
+  const backwards = fromTab >= 0 && toTab >= 0
+    ? toTab < fromTab
+    : parentPage(from) === id;
+  if (backwards && (parentPage(from) === id || fromTab - toTab === 1)) {
+    panTabs(document.getElementById(from), 1);
+    settleTabDrag(true, true);
+    return;
+  }
+  const main = pageMain;
+  if (!main.animate) {
+    showView(id);
+    return;
+  }
+  const offset = backwards ? -1 : 1;
+  pageStage.classList.add('is-moving');
+  const outgoing = main.animate(
+    [{opacity:1,transform:'none'},{opacity:0,transform:`translateX(${offset * -26}%)`}],
+    {duration:130,easing:'ease-in',fill:'forwards'}
+  );
+  filmTransition = outgoing;
+  const enter = () => {
+    showView(id);
+    const incoming = main.animate(
+      [{opacity:0,transform:`translateX(${offset * 32}%)`},{opacity:1,transform:'none'}],
+      {duration:240,easing:'cubic-bezier(.22,1,.36,1)'}
+    );
+    outgoing.cancel();
+    filmTransition = incoming;
+    const finish = () => {
+      pageStage.classList.remove('is-moving');
+      finishFilmTransition();
+    };
+    incoming.finished.then(finish, finish);
+  };
+  outgoing.finished.then(enter, enter);
+}
+
+function updateAccountSummary() {
+  document.querySelector('#membership-title').textContent = currentProfile.name;
+  document.querySelector('#wallet-holder').textContent = currentProfile.name;
+}
+
+function showView(id) {
+  const back = {
+    detail: ['films', detailSearchResult ? 'Recherche' : 'À l’affiche'],
+    booking: ['detail', 'Fiche du film'],
+    payment: ['booking', 'Choix des sièges'],
+    profile: ['account', 'Compte'],
+    'my-reviews': ['account', 'Compte'],
+    settings: ['account', 'Compte']
+  }[id];
+  pageBack.hidden = !back;
+  if (back) {
+    pageBack.dataset.go = back[0];
+    pageBack.querySelector('span').textContent = back[1];
+  }
+  if (id === 'account') updateAccountSummary();
+  if (id === 'my-reviews') window.CinemaReviews.showMine();
+  if (id === 'payment') renderPayment();
+  if (id !== 'payment' && applePaySheet.open) applePaySheet.close();
+  if (id !== 'films') {
+    releaseReelDrag();
+    stopSettling();
+    setFilmFocus(false);
+  }
+  if (id !== 'booking') closeAuditorium();
+  if (id === 'detail') mountDetailVideo();
+  else if (detailMedia) {
+    detailMedia.classList.remove('detail-video');
+    moveFilmVideo(detailMedia, detailSlide);
+    detailMedia = undefined;
+  }
+  for (const view of views) view.hidden = view.id !== id;
+  syncReservationBar();
+  if (id === 'films') goToSlide(activeSlide);
+  if (id === 'booking') openAuditorium();
+  const destination = ['settings','profile','my-reviews'].includes(id) ? 'account' : ['booking', 'payment', 'detail', 'search'].includes(id) ? 'films' : id;
+  const activeIndex = tabs.findIndex(tab => tab.dataset.go === destination);
+  nav.style.setProperty('--active-tab', activeIndex);
+  for (const [index, tab] of tabs.entries()) {
+    if (index === activeIndex) {
+      if (!tab.hasAttribute('aria-current')) tab.classList.add('tab-enter');
+      tab.setAttribute('aria-current', 'page');
+    } else {
+      tab.classList.remove('tab-enter');
+      tab.removeAttribute('aria-current');
+    }
+  }
+  window.scrollTo(0, 0);
+  const title = id === 'films'
+    ? slides[activeSlide].querySelector('[tabindex="-1"]')
+    : document.querySelector('#' + id + ' [tabindex="-1"]');
+  title.focus({preventScroll:true});
+  updateReelPlayback();
+}
+for (const button of document.querySelectorAll('[data-go]')) {
+  button.addEventListener('click', () => navigateView(button.dataset.go));
+}
+const detailView = document.querySelector('#detail');
+const detailCover = document.querySelector('#detail-cover');
+const detailTitle = document.querySelector('#detail-title');
+let detailSlide;
+let detailSearchResult;
+
+function moveBetweenFilmViews(before, after, update, onComplete) {
+  if (filmTransition) return;
+  if (reducedMotion.matches || !document.startViewTransition) {
+    update();
+    onComplete?.();
+    return;
+  }
+  const root = document.documentElement;
+  root.classList.add('is-shared-transition');
+  for (const [element, name] of before) element.style.viewTransitionName = name;
+  filmTransition = document.startViewTransition(() => {
+    for (const [element] of before) element.style.removeProperty('view-transition-name');
+    update();
+    for (const [element, name] of after) element.style.viewTransitionName = name;
+  });
+  const cleanup = () => {
+    for (const [element] of [...before, ...after]) element.style.removeProperty('view-transition-name');
+    root.classList.remove('is-shared-transition');
+    onComplete?.();
+    finishFilmTransition();
+  };
+  filmTransition.finished.then(cleanup, cleanup);
+}
+
+function moveFilmImage(source, target, slide, update) {
+  if (filmTransition) return;
+  if (reducedMotion.matches || !source.animate) {
+    update();
+    return;
+  }
+
+  const start = source.getBoundingClientRect();
+  const startCrop = getComputedStyle(source).backgroundPosition;
+  const image = document.createElement('div');
+  image.className = 'film-image-motion';
+  image.setAttribute('aria-hidden', 'true');
+  image.style.backgroundImage = getComputedStyle(slide).getPropertyValue('--cover');
+  const frame = (rect, backgroundPosition) => ({
+    left:rect.left + 'px', top:rect.top + 'px',
+    width:rect.width + 'px', height:rect.height + 'px', backgroundPosition
+  });
+  const first = frame(start, startCrop);
+  Object.assign(image.style, first);
+  document.body.append(image);
+  filmTransition = image;
+  update();
+  target.classList.add('film-image-target');
+  const end = frame(target.getBoundingClientRect(), getComputedStyle(target).backgroundPosition);
+  const cleanup = () => {
+    target.classList.remove('film-image-target');
+    image.remove();
+    finishFilmTransition();
+  };
+  image.animate([first, end], {
+    duration:460, easing:'cubic-bezier(.22,1,.36,1)', fill:'both'
+  }).finished.then(cleanup, cleanup);
+}
+
+function returnToFilm() {
+  if (detailSearchResult) {
+    moveBetweenFilmViews(
+      [[detailTitle, 'film-title']],
+      [[detailSearchResult, 'film-title']],
+      () => {
+        showView('search');
+        detailSearchResult.focus();
+      }
+    );
+    return;
+  }
+  const slide = detailSlide;
+  const index = slides.indexOf(slide);
+  moveFilmImage(detailCover, slide, slide,
+    () => {
+      activeSlide = index;
+      showView('films');
+    }
+  );
+}
+
+function moveFilmVideo(video, target) {
+  if (video.parentElement === target) return;
+  if (target.moveBefore) target.moveBefore(video, target.firstChild);
+  else {
+    if (playbackAttempt?.video === video) playbackAttempt = undefined;
+    target.prepend(video);
+  }
+}
+
+function mountDetailVideo() {
+  if (detailMedia) return;
+  detailMedia = reelVideos[slides.indexOf(detailSlide)];
+  detailMedia.classList.add('detail-video');
+  moveFilmVideo(detailMedia, detailCover);
+}
+function openFilmDetail(slide, searchButton) {
+  if (filmTransition) {
+    queuedNavigation = () => openFilmDetail(slide, searchButton);
+    return;
+  }
+  detailSlide = slide;
+  detailSearchResult = searchButton;
+  const video = reelVideos[slides.indexOf(slide)];
+  detailWantsPlayback = video === currentVideo ? !video.paused : playing && autoplayAllowed();
+  if (video !== currentVideo) video.currentTime = 0;
+  if (searchButton) {
+    moveBetweenFilmViews([[searchButton, 'film-title']], [[detailTitle, 'film-title']], () => renderFilmDetail(slide));
+    return;
+  }
+  const start = video.getBoundingClientRect();
+  renderFilmDetail(slide);
+  if (detailWantsPlayback && video.paused) video.play().catch(() => {});
+  if (reducedMotion.matches || !video.animate || !start.width || !start.height) return;
+
+  const end = video.getBoundingClientRect();
+  filmTransition = video.animate([
+    {transformOrigin:'top left', transform:`translate(${start.x-end.x}px,${start.y-end.y}px) scale(${start.width/end.width},${start.height/end.height})`},
+    {transformOrigin:'top left', transform:'none'}
+  ], {duration:440, easing:'cubic-bezier(.22,1,.36,1)'});
+  filmTransition.finished.then(finishFilmTransition, finishFilmTransition);
+}
+function renderFilmDetail(slide) {
+  detailCover.style.setProperty('--detail-cover', getComputedStyle(slide).getPropertyValue('--cover'));
+  document.querySelector('#detail-poster').src = slide.querySelector('.film-poster').src;
+  detailTitle.textContent = slide.querySelector('h1, h2').textContent;
+  document.querySelector('#detail-meta').textContent = slide.querySelector('.eyebrow').textContent + ' · ' + slide.dataset.duration;
+  document.querySelector('#detail-director').textContent = slide.dataset.director;
+  document.querySelector('#detail-cast-label').textContent = slide.dataset.castLabel;
+  document.querySelector('#detail-cast').textContent = slide.dataset.cast;
+  document.querySelector('#detail-source').href = slide.dataset.filmSource;
+  document.querySelector('#detail-synopsis').textContent = slide.querySelector('.film-summary').textContent;
+  window.CinemaReviews.show(slide.dataset.filmSource);
+  showView('detail');
+}
+for (const slide of slides) {
+  const button = slide.querySelector('.film-more');
+  button.setAttribute('aria-label', 'Voir plus sur ' + slide.querySelector('h1, h2').textContent);
+  button.addEventListener('click', () => openFilmDetail(slide));
+}
+function setTheme(light) {
+  document.documentElement.dataset.theme = light ? 'light' : 'dark';
+
+}
+const systemTheme = matchMedia('(prefers-color-scheme: light)');
+const themeOptions = document.querySelectorAll('input[name="appearance"]');
+const storedTheme = savedSetting('theme');
+let themePreference = ['light', 'dark'].includes(storedTheme) ? storedTheme : 'system';
+function applyAppearance() {
+  for (const option of themeOptions) option.checked = option.value === themePreference;
+  setTheme(themePreference === 'system' ? systemTheme.matches : themePreference === 'light');
+}
+applyAppearance();
+let themeTimer;
+function changeAppearance(preference) {
+  themePreference = preference;
+  saveSetting('theme', preference);
+  if (filmTransition || reducedMotion.matches) {
+    applyAppearance();
+    return;
+  }
+  const root = document.documentElement;
+  clearTimeout(themeTimer);
+  if (document.startViewTransition) {
+    root.classList.remove('theme-changing');
+    root.classList.add('theme-crossfade');
+    const transition = document.startViewTransition(applyAppearance);
+    filmTransition = transition;
+    const finish = () => {
+      root.classList.remove('theme-crossfade');
+      finishFilmTransition();
+    };
+    transition.finished.then(finish, finish);
+  } else {
+    root.classList.add('theme-changing');
+    applyAppearance();
+    themeTimer = setTimeout(() => root.classList.remove('theme-changing'), 320);
+  }
+}
+for (const option of themeOptions) option.addEventListener('change', () => changeAppearance(option.value));
+systemTheme.addEventListener('change', () => {
+  if (themePreference === 'system') applyAppearance();
+});
+const autoplaySetting = document.querySelector('#autoplay-setting');
+const doubleClickModeInput = document.querySelector('#double-click-mode');
+const doubleClickDelayInput = document.querySelector('#double-click-delay');
+function renderDoubleClickSettings() {
+  doubleClickModeInput.value = doubleClickMode;
+  doubleClickDelayInput.value = doubleClickDelay;
+  document.querySelector('#double-click-value').value = doubleClickDelay + ' ms';
+  document.querySelector('#double-click-custom').hidden = doubleClickMode !== 'custom';
+  document.querySelector('#double-click-description').textContent = doubleClickMode === 'system'
+    ? 'À la souris, utilise le double-clic reconnu par le navigateur. Sur écran tactile, le délai est de 500 ms.'
+    : 'Choisissez le temps maximal entre deux clics ou deux appuis. Un délai plus long facilite les gestes espacés.';
+}
+doubleClickModeInput.addEventListener('change', () => {
+  clearPendingTap();
+  doubleClickMode = doubleClickModeInput.value;
+  saveSetting('double-click-mode', doubleClickMode);
+  renderDoubleClickSettings();
+});
+doubleClickDelayInput.addEventListener('input', () => {
+  clearPendingTap();
+  doubleClickDelay = Number(doubleClickDelayInput.value);
+  saveSetting('double-click-delay', String(doubleClickDelay));
+  renderDoubleClickSettings();
+});
+renderDoubleClickSettings();
+autoplaySetting.checked = autoplayEnabled;
+autoplaySetting.addEventListener('change', () => {
+  autoplayEnabled = autoplaySetting.checked;
+  saveSetting('autoplay', autoplayEnabled ? 'on' : 'off');
+  playing = autoplayAllowed();
+  tapPausedVideo = undefined;
+  syncPlayback();
+});
+const screeningDays = document.querySelector('#screening-days');
+const screeningTimes = document.querySelector('#screening-times');
+const screeningDate = document.querySelector('#screening-date');
+const shortDayFormat = new Intl.DateTimeFormat('fr-FR', {weekday:'short'});
+const shortDateFormat = new Intl.DateTimeFormat('fr-FR', {day:'numeric', month:'short'});
+const screeningDateFormat = new Intl.DateTimeFormat('fr-FR', {weekday:'long', day:'numeric', month:'short'});
+const today = new Date();
+const dayButtons = [];
+let selectedDay = 0;
+let bookedDay;
+for (let offset = 0; offset < 7; offset++) {
+  const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() + offset, 12);
+  const label = screeningDateFormat.format(date);
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'screening-day';
+  const weekday = document.createElement('span');
+  weekday.textContent = offset === 0 ? 'Aujourd’hui' : offset === 1 ? 'Demain' : shortDayFormat.format(date);
+  const dateNumber = document.createElement('strong');
+  dateNumber.textContent = shortDateFormat.format(date);
+  button.append(weekday, dateNumber);
+  if (offset === 0) screeningDate.textContent = '· ' + label;
+  button.setAttribute('aria-label', label);
+  button.setAttribute('aria-pressed', offset === 0);
+  button.addEventListener('click', () => {
+    dayButtons[selectedDay].button.setAttribute('aria-pressed', 'false');
+    selectedDay = offset;
+    clearPendingSession();
+    screeningDate.textContent = '· ' + label;
+    button.setAttribute('aria-pressed', 'true');
+    screeningTimes.scrollLeft = 0;
+  });
+  dayButtons.push({button, label});
+  screeningDays.append(button);
+}
+for (const track of [screeningDays, screeningTimes]) {
+  const previous = track.previousElementSibling;
+  const next = track.nextElementSibling;
+  const syncArrows = () => {
+    previous.disabled = track.scrollLeft <= 1;
+    next.disabled = track.scrollLeft + track.clientWidth >= track.scrollWidth - 1;
+  };
+  for (const [arrow, direction] of [[previous, -1], [next, 1]]) {
+    arrow.addEventListener('click', () => track.scrollBy({
+      left:direction * track.clientWidth * .8,
+      behavior:reducedMotion.matches ? 'instant' : 'smooth'
+    }));
+  }
+  track.addEventListener('scroll', syncArrows, {passive:true});
+  new ResizeObserver(syncArrows).observe(track);
+}
+const occupiedSeats = new Set(['A1','A8','B3','B5','B6','C2','C7','D4','D5','E1','E6']);
+const seatMap = document.querySelector('#seat-map');
+const seatLayout = [];
+const seatButtons = new Map();
+const selection = new Set();
+const pricePerSeat = 12;
+const auditoriumView = document.querySelector('#auditorium-view');
+const auditoriumCanvas = document.querySelector('#auditorium-canvas');
+const auditoriumCaption = document.querySelector('#auditorium-caption');
+const auditoriumLookHint = document.querySelector('#auditorium-look-hint');
+const overviewButton = document.querySelector('#auditorium-overview');
+const roomFallback = document.querySelector('#room-fallback');
+let auditorium;
+let auditoriumUnavailable = false;
+let viewedSeat;
+auditoriumCanvas.addEventListener('auditoriumprojectionerror', () => {
+  const notice = document.querySelector('#projection-notice');
+  notice.textContent = 'Projection de l’extrait indisponible.';
+  if (location.protocol === 'file:') {
+    notice.textContent = 'La projection vidéo nécessite le serveur local. ';
+    const link = document.createElement('a');
+    link.href = 'http://127.0.0.1:8765/mobile.html';
+    link.textContent = 'Ouvrir la maquette';
+    notice.append(link);
+  }
+  notice.hidden = false;
+});
+auditoriumCanvas.addEventListener('auditoriumlookchange', event => {
+  document.querySelector('#booking').classList.toggle('is-looking', event.detail);
+  document.querySelector('.seat-picker').inert = event.detail;
+});
+
+for (const [row, letter] of [...'ABCDE'].entries()) {
+  const rowElement = document.createElement('div');
+  rowElement.className = 'seat-row';
+  rowElement.setAttribute('role', 'group');
+  rowElement.setAttribute('aria-label', 'Rangée ' + letter);
+  for (let number = 1; number <= 8; number++) {
+    const id = letter + number;
+    const occupied = occupiedSeats.has(id);
+    const seat = {id, row, number, occupied};
+    seatLayout.push(seat);
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.seat = id;
+    button.textContent = id;
+    button.disabled = occupied;
+    button.setAttribute('aria-label', occupied ? id + ', occupé' : id);
+    if (occupied) button.dataset.occupied = '';
+    else button.setAttribute('aria-pressed', 'false');
+    button.addEventListener('click', () => toggleSeat(id));
+    seatButtons.set(id, button);
+    rowElement.append(button);
+  }
+  seatMap.append(rowElement);
+}
+
+function showAuditoriumCamera(seat) {
+  viewedSeat = seat;
+  auditoriumView.dataset.camera = seat ? 'seat' : 'overview';
+  auditoriumCaption.textContent = seat ? 'Vue depuis ' + seat : 'Vue d’ensemble';
+  auditoriumLookHint.hidden = !seat;
+  auditoriumCanvas.setAttribute('aria-hidden', String(!seat));
+  if (seat) auditoriumCanvas.tabIndex = 0;
+  else auditoriumCanvas.removeAttribute('tabindex');
+  overviewButton.hidden = !seat;
+  if (seat) auditorium?.showSeat(seat);
+  else auditorium?.showOverview();
+}
+overviewButton.addEventListener('click', () => {
+  showAuditoriumCamera();
+  auditoriumCaption.focus({preventScroll:true});
+});
+
+function closeAuditorium() {
+  auditorium?.deactivate();
+  auditorium?.setVideo(undefined);
+  if (bookingMedia) {
+    bookingMedia.loop = false;
+    bookingMedia.classList.remove('projection-video');
+    moveFilmVideo(bookingMedia, selectedScreeningFilm);
+  }
+  bookingMedia = undefined;
+}
+
+function showAuditoriumFallback() {
+  closeAuditorium();
+  auditorium = undefined;
+  auditoriumUnavailable = true;
+  auditoriumView.hidden = true;
+  roomFallback.hidden = false;
+  updateReelPlayback();
+}
+auditoriumCanvas.addEventListener('webglcontextlost', showAuditoriumFallback);
+
+function openAuditorium() {
+  if (auditoriumUnavailable) return;
+  document.querySelector('#projection-notice').hidden = true;
+  auditoriumView.hidden = false;
+  if (!auditorium) {
+    try {
+      auditorium = window.CinemaAuditorium?.create(auditoriumCanvas, seatLayout, toggleSeat);
+    } catch {
+      showAuditoriumFallback();
+      return;
+    }
+  }
+  if (!auditorium) {
+    showAuditoriumFallback();
+    return;
+  }
+  bookingMedia = reelVideos[slides.indexOf(selectedScreeningFilm)];
+  bookingMedia.loop = true;
+  bookingMedia.classList.add('projection-video');
+  moveFilmVideo(bookingMedia, auditoriumView);
+  bookingWantsPlayback = autoplayAllowed();
+  auditorium.setVideo(bookingMedia);
+  auditorium.activate();
+  auditorium.setSelection([...selection]);
+  showAuditoriumCamera(viewedSeat);
+}
+
+function updateSeatSelection() {
+  for (const [id, button] of seatButtons) {
+    if (!occupiedSeats.has(id)) {
+      button.disabled = ticketActive;
+      button.setAttribute('aria-pressed', selection.has(id));
+    }
+  }
+  const count = selection.size;
+  total.textContent = count + (count > 1 ? ' places' : ' place') + ' · ' + count * pricePerSeat + ' €';
+  const selectedIds = [...selection].sort();
+  const visibleIds = selectedIds.slice(0, 3).join(' · ');
+  document.querySelector('#booking-selection').textContent = count > 3
+    ? visibleIds + ' · +' + (count - 3)
+    : visibleIds || '12 € par place';
+  pay.disabled = count === 0 || ticketActive;
+  auditorium?.setSelection([...selection]);
+}
+
+function toggleSeat(id) {
+  if (ticketActive || !seatButtons.has(id) || occupiedSeats.has(id)) return;
+  if (selection.has(id)) {
+    selection.delete(id);
+    if (viewedSeat === id) showAuditoriumCamera([...selection].at(-1));
+  } else {
+    selection.add(id);
+    showAuditoriumCamera(id);
+  }
+  feedback.textContent = '';
+  updateSeatSelection();
+}
+
+const reservationBar = document.querySelector('#reservation-bar');
+const reserveSession = document.querySelector('#reserve-session');
+const sessionButtons = [...document.querySelectorAll('[data-time][data-room]')];
+let pendingSession;
+let pendingSessionFilm;
+let pendingSessionDay;
+
+function syncReservationBar() {
+  const visible = !document.querySelector('#detail').hidden && pendingSession &&
+    pendingSessionFilm === detailSlide && pendingSessionDay === selectedDay;
+  reservationBar.hidden = !visible;
+  document.querySelector('#detail').classList.toggle('has-reservation', Boolean(visible));
+  for (const session of sessionButtons) session.setAttribute('aria-pressed', Boolean(visible && session === pendingSession));
+  if (visible) document.querySelector('#reservation-summary').textContent =
+    dayButtons[pendingSessionDay].label + ' · ' + pendingSession.dataset.time + ' · Salle ' + pendingSession.dataset.room;
+}
+function clearPendingSession() {
+  pendingSession = undefined;
+  syncReservationBar();
+}
+for (const session of sessionButtons) {
+  session.addEventListener('click', () => {
+    pendingSession = session;
+    pendingSessionFilm = detailSlide;
+    pendingSessionDay = selectedDay;
+    syncReservationBar();
+    if (!reducedMotion.matches) reservationBar.animate(
+      [{opacity:0,transform:'translateY(24px)'},{opacity:1,transform:'none'}],
+      {duration:280,easing:'cubic-bezier(.22,1,.36,1)'});
+  });
+}
+reserveSession.addEventListener('click', () => {
+    if (!pendingSession || pendingSessionFilm !== detailSlide || pendingSessionDay !== selectedDay) return;
+    const session = pendingSession;
+    if (ticketActive) {
+      navigateView('tickets');
+      return;
+    }
+    if (selectedSession !== session || selectedScreeningFilm !== detailSlide || bookedDay !== selectedDay) {
+      selectedSession = session;
+      bookedDay = selectedDay;
+      selectedScreeningFilm = detailSlide;
+      document.querySelector('#booking-film').textContent = detailTitle.textContent;
+      document.querySelector('#booking-room').textContent = session.dataset.room;
+      bookingSession.textContent = dayButtons[bookedDay].label + ' · ' + session.dataset.time + ' · VF';
+      attempted = false;
+      feedback.textContent = '';
+      selection.clear();
+      showAuditoriumCamera();
+      updateSeatSelection();
+      seatMap.closest('.seat-map-scroll').scrollLeft = 0;
+      pay.textContent = 'Continuer';
+    }
+    navigateView('booking');
+});
+pay.addEventListener('click', () => {
+  if (ticketActive || selection.size === 0) return;
+  navigateView('payment');
+});
+function confirmTicket() {
+  if (ticketActive || selection.size === 0 || !selectedSession) return;
+  feedback.textContent = '';
+  ticketActive = true;
+  const ticket = document.querySelector('#ticket');
+  const poster = selectedScreeningFilm.querySelector('.film-poster').getAttribute('src');
+  document.querySelector('#ticket-poster').src = poster;
+  ticket.style.setProperty('--ticket-poster', `url("${poster}")`);
+  ticket.dataset.status = 'confirmed';
+  document.querySelector('#ticket-day').textContent = dayButtons[bookedDay].label;
+  document.querySelector('#ticket-time').textContent = selectedSession.dataset.time;
+  document.querySelector('#ticket-room').textContent = selectedSession.dataset.room;
+  document.querySelector('#ticket-film').textContent = document.querySelector('#booking-film').textContent;
+  ticketStatus.textContent = 'Billet confirmé';
+  cancelTicket.hidden = false;
+  document.querySelector('#ticket-seats-label').textContent = selection.size === 1 ? 'Siège' : 'Sièges';
+  document.querySelector('#ticket-seats').textContent = [...selection].sort().join(', ');
+  document.querySelector('#empty').hidden = true;
+  ticket.hidden = false;
+  updateSeatSelection();
+  pay.textContent = 'Billet confirmé';
+  navigateView('tickets');
+}
+
+const applePaySheet = document.querySelector('#apple-pay-sheet');
+const applePayConfirm = document.querySelector('#apple-pay-confirm');
+const applePayFeedback = document.querySelector('#apple-pay-feedback');
+const walletAuthLabel = document.querySelector('#wallet-auth-label');
+const applePayButton = document.querySelector('#apple-pay');
+const applePayMark = document.querySelector('.apple-mark').cloneNode(true);
+applePayMark.setAttribute('aria-hidden','true');
+applePayButton.replaceChildren('Payer avec ', applePayMark, 'Pay');
+let paymentTimer;
+let paymentProcessing = false;
+const formatPrice = amount => new Intl.NumberFormat('fr-FR', {style:'currency',currency:'EUR'}).format(amount);
+
+function renderPayment() {
+  if (!selectedSession || !selectedScreeningFilm) return;
+  document.querySelector('#payment-poster').src = selectedScreeningFilm.querySelector('.film-poster').src;
+  document.querySelector('#payment-film').textContent = document.querySelector('#booking-film').textContent;
+  document.querySelector('#payment-session').textContent = bookingSession.textContent + ' · Salle ' + selectedSession.dataset.room;
+  document.querySelector('#payment-seats').textContent = [...selection].sort().join(', ');
+  document.querySelector('#wallet-seats').textContent = [...selection].sort().join(', ');
+  document.querySelector('#wallet-purchase').textContent = document.querySelector('#booking-film').textContent;
+  document.querySelector('#payment-quantity').textContent = selection.size + (selection.size > 1 ? ' places' : ' place') + ' × ' + formatPrice(pricePerSeat);
+  const amount = formatPrice(selection.size * pricePerSeat);
+  for (const id of ['payment-subtotal','payment-total','apple-pay-total']) document.getElementById(id).textContent = amount;
+}
+
+document.querySelector('#apple-pay').addEventListener('click', () => {
+  if (ticketActive || !selection.size || !selectedSession || applePaySheet.open) return;
+  renderPayment();
+  applePayFeedback.textContent = 'Touchez Face ID pour simuler la confirmation.';
+  walletAuthLabel.textContent = 'Confirmer avec Face ID';
+  applePayConfirm.setAttribute('aria-label','Simuler la confirmation Face ID');
+  applePayConfirm.disabled = false;
+  applePaySheet.dataset.state = 'ready';
+  applePaySheet.classList.remove('is-closing');
+  applePaySheet.showModal();
+});
+function dismissApplePay(onComplete) {
+  if (!applePaySheet.open || applePaySheet.classList.contains('is-closing')) return;
+  clearTimeout(paymentTimer);
+  applePayConfirm.disabled = true;
+  applePaySheet.classList.add('is-closing');
+  paymentTimer = setTimeout(() => {
+    applePaySheet.close();
+    onComplete?.();
+  }, reducedMotion.matches ? 0 : 280);
+}
+document.querySelector('#apple-pay-cancel').addEventListener('click', () => dismissApplePay());
+applePaySheet.addEventListener('cancel', event => {
+  event.preventDefault();
+  dismissApplePay();
+});
+applePaySheet.addEventListener('close', () => {
+  clearTimeout(paymentTimer);
+  paymentProcessing = false;
+  applePayConfirm.disabled = false;
+  applePaySheet.classList.remove('is-closing');
+  applePaySheet.removeAttribute('aria-busy');
+});
+function simulateFaceID() {
+  if (paymentProcessing || ticketActive || !selection.size || !selectedSession) return;
+  if (!applePaySheet.open || applePaySheet.classList.contains('is-closing')) return;
+  paymentProcessing = true;
+  applePayConfirm.disabled = true;
+  applePaySheet.dataset.state = 'scanning';
+  walletAuthLabel.textContent = 'Face ID';
+  applePayFeedback.textContent = 'Vérification simulée…';
+  applePaySheet.setAttribute('aria-busy','true');
+  paymentTimer = setTimeout(() => {
+    if (!applePaySheet.open) return;
+    applePaySheet.dataset.state = 'processing';
+    walletAuthLabel.textContent = 'Traitement…';
+    applePayFeedback.textContent = 'Autorisation du paiement simulé…';
+    paymentTimer = setTimeout(() => {
+      if (!applePaySheet.open) return;
+      applePaySheet.removeAttribute('aria-busy');
+      if (!attempted) {
+        attempted = true;
+        paymentProcessing = false;
+        applePayConfirm.disabled = false;
+        applePaySheet.dataset.state = 'declined';
+        walletAuthLabel.textContent = 'Réessayer';
+        applePayConfirm.setAttribute('aria-label','Réessayer le paiement simulé');
+        applePayFeedback.textContent = 'Paiement simulé refusé. Vos sièges sont conservés.';
+        return;
+      }
+      applePaySheet.dataset.state = 'success';
+      walletAuthLabel.textContent = 'Terminé';
+      applePayFeedback.textContent = 'Paiement simulé confirmé';
+      paymentTimer = setTimeout(() => dismissApplePay(confirmTicket), 900);
+    }, 900);
+  }, 1000);
+}
+applePayConfirm.addEventListener('click', simulateFaceID);
+document.querySelector('#wallet-side-button').addEventListener('dblclick', simulateFaceID);
+document.querySelector('#wallet-side-button').addEventListener('click', event => {
+  if (event.detail === 0) simulateFaceID();
+});
+const profileName = document.querySelector('#profile-name');
+const profileEmail = document.querySelector('#profile-email');
+const profileFeedback = document.querySelector('#profile-feedback');
+let currentProfile = {name:'Lorem Ipsum', email:''};
+try {
+  const storedProfile = JSON.parse(savedSetting('profile'));
+  if (storedProfile && typeof storedProfile.name === 'string' && storedProfile.name.trim() && storedProfile.name.length <= 80 &&
+      typeof storedProfile.email === 'string' && storedProfile.email.length <= 254) currentProfile = storedProfile;
+} catch {}
+profileName.value = currentProfile.name;
+profileEmail.value = currentProfile.email;
+updateAccountSummary();
+profileName.addEventListener('input', () => {
+  profileName.setCustomValidity('');
+  profileFeedback.textContent = '';
+});
+document.querySelector('#profile-form').addEventListener('submit', event => {
+  event.preventDefault();
+  const updated = {name:profileName.value.trim(),email:profileEmail.value.trim()};
+  if (!updated.name) {
+    profileName.setCustomValidity('Saisissez un nom.');
+    profileName.reportValidity();
+    return;
+  }
+  try {
+    localStorage.setItem('cine-lumiere.profile', JSON.stringify(updated));
+  } catch {
+    profileFeedback.textContent = 'L’enregistrement a échoué. Votre saisie est conservée, réessayez.';
+    return;
+  }
+  currentProfile = updated;
+  updateAccountSummary();
+  profileName.value = updated.name;
+  profileEmail.value = updated.email;
+  profileFeedback.textContent = 'Vos informations ont été enregistrées.';
+});
+
+const cancelConfirmation = document.querySelector('#cancel-confirmation');
+cancelTicket.addEventListener('click', () => {
+  if (!ticketActive) return;
+  document.querySelector('#cancel-description').textContent = document.querySelector('#ticket-film').textContent +
+    ' · ' + document.querySelector('#ticket-day').textContent + ' · ' + document.querySelector('#ticket-time').textContent +
+    '. Les sièges de cette réservation seront libérés.';
+  cancelConfirmation.returnValue = 'keep';
+  cancelConfirmation.showModal();
+});
+cancelConfirmation.addEventListener('close', () => {
+  if (cancelConfirmation.returnValue !== 'confirm' || !ticketActive) return;
+  ticketActive = false;
+  selectedSession = undefined;
+  document.querySelector('#ticket').dataset.status = 'cancelled';
+  ticketStatus.textContent = 'Billet annulé';
+  ticketStatus.tabIndex = -1;
+  ticketStatus.focus();
+  cancelTicket.hidden = true;
+  clearPendingSession();
+  pay.textContent = 'Billet annulé';
+});
+</script>
+</body>
+</html>
