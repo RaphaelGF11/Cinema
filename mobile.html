@@ -862,22 +862,27 @@ html.is-shared-transition { view-transition-name:none; }
   container-type:inline-size;
 }
 @media (hover:hover) and (pointer:fine) {
-  button { transition:filter 160ms ease, transform 160ms ease, background-color 160ms ease, border-color 160ms ease; }
+  button,.nav button,.reel-controls button,.hero.has-video > button.film-more {
+    transition:filter 220ms ease-out, transform 220ms ease-out,
+      background-color 220ms ease-out, border-color 220ms ease-out,
+      color 220ms ease-out, box-shadow 220ms ease-out,
+      opacity 180ms ease, visibility 180ms;
+  }
   button:not(:disabled):hover { filter:brightness(1.1); }
   button:not(:disabled):not(.wallet-side-button):hover { transform:translateY(-1px); }
   button:not(:disabled):active { transform:none; filter:brightness(.97); }
   .nav button:hover,.reel-controls button:hover {
-    background:color-mix(in srgb,currentColor 7%,transparent);
+    background-color:color-mix(in srgb,currentColor 7%,transparent);
   }
   .nav button { border-radius:18px; }
   .account-links button:hover,.screening-day:not([aria-pressed="true"]):hover,
   #detail-booking .session:not(:disabled):not([aria-pressed="true"]):hover {
-    background:color-mix(in srgb,var(--accent) 9%,var(--panel));
+    background-color:color-mix(in srgb,var(--accent) 9%,var(--panel));
     border-color:color-mix(in srgb,var(--accent) 40%,var(--line));
   }
 }
 @media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:reduce) {
-  button { transition:none; }
+  button,.nav button,.reel-controls button,.hero.has-video > button.film-more { transition:none; }
   button:not(:disabled):not(.wallet-side-button):hover { transform:none; }
 }
 
