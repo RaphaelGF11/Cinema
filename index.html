@@ -971,6 +971,35 @@ html.is-shared-transition { view-transition-name:none; }
   #detail > .detail-cover { min-height:0; }
 }
 </style>
+<style>
+
+/* A brief horizontal insertion supplements the existing shared film image motion. */
+#detail { overflow-x:clip; }
+.detail-panel-motion {
+  position:fixed; inset:0; z-index:2; overflow:hidden; pointer-events:none;
+  container-type:inline-size;
+}
+@media (hover:hover) and (pointer:fine) {
+  button { transition:filter 160ms ease, transform 160ms ease, background-color 160ms ease, border-color 160ms ease; }
+  button:not(:disabled):hover { filter:brightness(1.1); }
+  button:not(:disabled):not(.wallet-side-button):hover { transform:translateY(-1px); }
+  button:not(:disabled):active { transform:none; filter:brightness(.97); }
+  .nav button:hover,.reel-controls button:hover {
+    background:color-mix(in srgb,currentColor 7%,transparent);
+  }
+  .nav button { border-radius:18px; }
+  .account-links button:hover,.screening-day:not([aria-pressed="true"]):hover,
+  #detail-booking .session:not(:disabled):not([aria-pressed="true"]):hover {
+    background:color-mix(in srgb,var(--accent) 9%,var(--panel));
+    border-color:color-mix(in srgb,var(--accent) 40%,var(--line));
+  }
+}
+@media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:reduce) {
+  button { transition:none; }
+  button:not(:disabled):not(.wallet-side-button):hover { transform:none; }
+}
+
+</style>
 </head>
 <body>
 <div class="app">
@@ -2499,6 +2528,59 @@ function moveBetweenFilmViews(before, after, update, onComplete) {
   filmTransition.finished.then(cleanup, cleanup);
 }
 
+function insertDetailPanel() {
+  const panel = detailView.querySelector('.detail-copy');
+  if (reducedMotion.matches || !panel?.animate) return;
+  const distance = Math.min(40, innerWidth * .05);
+  panel.animate([
+    {opacity:0, transform:`translateX(${distance}px)`},
+    {opacity:1, transform:'none'}
+  ], {duration:360, easing:'cubic-bezier(.22,1,.36,1)'});
+}
+
+function withdrawDetailPanel() {
+  const panel = detailView.querySelector('.detail-copy');
+  if (reducedMotion.matches || !panel?.animate) return;
+  const rect = panel.getBoundingClientRect();
+  if (rect.bottom <= 0 || rect.top >= innerHeight) return;
+  const computed = getComputedStyle(panel);
+  const padding = computed.padding;
+  const containerType = computed.containerType;
+  const originalStyle = panel.getAttribute('style');
+  const originallyInert = panel.inert;
+  const placeholder = document.createComment('detail panel transition');
+  panel.before(placeholder);
+  const layer = document.createElement('div');
+  layer.className = 'detail-panel-motion';
+  layer.inert = true;
+  layer.setAttribute('aria-hidden', 'true');
+  document.body.append(layer);
+  layer.append(panel);
+  Object.assign(panel.style, {
+    position:'absolute', left:rect.left + 'px', top:rect.top + 'px',
+    width:rect.width + 'px', height:rect.height + 'px', minHeight:'0',
+    margin:'0', padding, boxSizing:'border-box', containerType
+  });
+  panel.inert = true;
+  const restore = () => {
+    if (!placeholder.parentNode) return;
+    placeholder.replaceWith(panel);
+    if (originalStyle === null) panel.removeAttribute('style');
+    else panel.setAttribute('style', originalStyle);
+    panel.inert = originallyInert;
+    layer.remove();
+  };
+  try {
+    const motion = layer.animate([
+      {opacity:1, transform:'none'},
+      {opacity:0, transform:`translateX(${Math.min(40, innerWidth * .05)}px)`}
+    ], {duration:240, easing:'cubic-bezier(.4,0,1,1)', fill:'forwards'});
+    motion.finished.then(restore, restore);
+  } catch {
+    restore();
+  }
+}
+
 function moveFilmImage(source, target, slide, update) {
   if (filmTransition) return;
   if (reducedMotion.matches || !source.animate) {
@@ -2520,6 +2602,7 @@ function moveFilmImage(source, target, slide, update) {
   Object.assign(image.style, first);
   document.body.append(image);
   filmTransition = image;
+  if (source === detailCover) withdrawDetailPanel();
   update();
   target.classList.add('film-image-target');
   const end = frame(target.getBoundingClientRect(), getComputedStyle(target).backgroundPosition);
@@ -2586,6 +2669,7 @@ function openFilmDetail(slide, searchButton) {
   }
   const start = video.getBoundingClientRect();
   renderFilmDetail(slide);
+  insertDetailPanel();
   if (detailWantsPlayback && video.paused) video.play().catch(() => {});
   if (reducedMotion.matches || !video.animate || !start.width || !start.height) return;
 

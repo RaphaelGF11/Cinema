@@ -161,3 +161,10 @@ Sur téléphone, Apple Pay et Google Pay sont affichés côte à côte, avec leu
 ### Verre allégé
 
 Les commandes flottantes utilisent des bordures décoratives de 0,75 px : 15 % d’opacité en sombre, 17 % en clair. Le reflet supérieur reste discret, à 28 % en sombre et 46 % en clair. La teinte du verre standard passe à 34 % en sombre et 42 % en clair. Les ombres sont plus courtes et moins denses, et l’onglet actif n’empile plus un fond opaque et un reflet intérieur. Les panneaux du plan 3D et le récapitulatif de réservation partagent cette matière plus légère. Les contours fonctionnels, les états sélectionnés, les indicateurs de focus et les surfaces opaques de repli restent distincts des bordures décoratives.
+
+
+### Insertion du panneau de détails et survol
+
+Depuis l’accueil, le panneau des séances et des informations entre horizontalement depuis la droite, avec une amplitude limitée à 40 px et un fondu de 360 ms. Au retour, le panneau se retire vers la droite en 240 ms, pendant la transformation existante du visuel. Le panneau réel et ses champs sont conservés et remis à leur place après la sortie, sans dupliquer le contenu. Le geste de retour continue de suivre le doigt. La réduction des animations désactive cette insertion.
+
+Sur les appareils avec souris et survol, les boutons s’éclaircissent légèrement et se soulèvent de 1 px. La navigation et les commandes sur verre reçoivent un voile discret ; les horaires libres et les options du compte reçoivent une légère teinte rouge. Les boutons désactivés sont exclus. En mode de réduction des animations, le déplacement et les transitions sont supprimés.
