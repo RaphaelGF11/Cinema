@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ciné Lumière — Liquid Glass</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme:dark;
+  --canvas:#171412; --surface:#292320; --decor:#703029; --signal:#e63929;
+  --ink:#fff9eb; --muted:#d8c9b6; --accent:#e63929; --on-accent:#120c09;
+  --danger:#ffabb9; --success:#a4e5be; --line:#a18d7c;
+  --glass:rgb(41 35 32 / 52%); --glass-clear:rgb(41 35 32 / 30%);
+  --veil:rgb(0 0 0 / 20%); --rim:rgb(255 249 235 / 32%);
+  --rim-light:rgb(255 249 235 / 74%); --rim-shade:rgb(255 249 235 / 13%);
+  --glass-shadow:rgb(9 6 4 / 29%);
+  --panel-line:#56473c;
+  --blur:12px; --radius:24px; --motion:180ms;
+  --display:"Instrument Serif", Georgia, serif;
+}
+html[data-theme="light"] {
+  color-scheme:light;
+  --canvas:#fff9eb; --surface:#f5ebd7; --decor:#e63929; --signal:#e63929;
+  --ink:#241714; --muted:#65483d; --accent:#b51c18; --on-accent:#ffffff;
+  --danger:#9f1524; --success:#215a3a; --line:#8d695c;
+  --glass:rgb(245 235 215 / 52%); --glass-clear:rgb(245 235 215 / 30%);
+  --veil:rgb(255 249 235 / 20%); --rim:rgb(101 72 61 / 33%);
+  --rim-light:rgb(255 255 255 / 96%); --rim-shade:rgb(101 72 61 / 20%);
+  --glass-shadow:rgb(56 34 22 / 16%);
+  --panel-line:#c9ad96;
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--canvas); color:var(--ink); font:16px/1.5 "DM Sans",system-ui,sans-serif; }
+a { color:inherit; }
+button { font:inherit; }
+button, .nav a { min-height:44px; min-width:44px; border-radius:99px; }
+button { padding:8px 16px; color:var(--ink); background:var(--surface); border:1px solid var(--line); cursor:pointer; transition:background-color var(--motion),color var(--motion); }
+button:hover:not(:disabled) { border-color:var(--ink); }
+button:disabled { cursor:default; color:var(--muted); }
+button[aria-pressed="true"], .primary:not(:disabled) { background:var(--accent); color:var(--on-accent); border-color:var(--accent); font-weight:700; }
+:focus-visible { outline:3px solid var(--ink); outline-offset:4px; }
+[hidden] { display:none !important; }
+.wrap { width:min(1120px, calc(100% - 32px)); margin:auto; }
+.mast { display:flex; align-items:center; justify-content:space-between; gap:16px; min-height:72px; flex-wrap:wrap; padding-block:8px; border-bottom:1px solid var(--line); }
+.brand { font-weight:700; letter-spacing:.11em; text-transform:uppercase; font-size:14px; }
+.spec { color:var(--muted); font-size:14px; text-underline-offset:4px; display:inline-flex; align-items:center; min-height:44px; }
+.hero {
+  --hero-ink:#fff9eb;
+  position:relative; isolation:isolate;
+  min-height:clamp(560px,calc(100svh - 72px),920px);
+  width:100%; margin-top:0; padding:clamp(24px,6vw,96px) max(24px,calc((100vw - 1120px) / 2));
+  overflow:hidden; background:#171412; color:var(--hero-ink);
+  display:flex; flex-direction:column; justify-content:flex-end; gap:32px;
+}
+.hero::before {
+  content:""; position:absolute; inset:0; z-index:-2;
+  background:
+    linear-gradient(90deg,rgb(12 9 10 / 91%) 0%,rgb(12 9 10 / 72%) 30%,transparent 72%),
+    linear-gradient(0deg,rgb(12 9 10 / 76%) 0%,transparent 52%),
+    url("les-heures-bleues.webp") center 46% / cover no-repeat;
+}
+.hero .eyebrow { color:#ffe0ca; }
+.hero :focus-visible { outline-color:var(--hero-ink); }
+.hero .hero-action {
+  display:inline-flex; align-items:center; min-height:44px; border-radius:99px;
+  padding:8px 20px; margin-top:20px; background:var(--accent);
+  color:var(--on-accent); font-weight:700; text-decoration:none;
+}
+.hero .hero-action:hover { text-decoration:underline; }
+.hero .nav { color:var(--ink); }
+.hero::after { content:""; position:absolute; inset:0; z-index:-1; pointer-events:none; }
+[data-material="clear"] .glass { background:var(--surface); }
+.hero[data-material="clear"]::after { background:var(--veil); }
+.eyebrow { color:var(--muted); text-transform:uppercase; font-size:14px; letter-spacing:.14em; font-weight:700; margin:0 0 8px; }
+h1,h2,.film { font-family:var(--display); font-weight:400; margin:0; line-height:1; }
+h1 { font-size:clamp(64px,10vw,132px); letter-spacing:-.035em; }
+h1 em { display:block; color:#ffd3bd; }
+.hero p:not(.eyebrow) { max-width:34ch; }
+.glass {
+  position:relative;
+  background:var(--surface);
+  border:1px solid var(--rim);
+  box-shadow:0 8px 20px var(--glass-shadow);
+}
+@supports (mask-composite:exclude) {
+  .glass { border-color:transparent; }
+  .glass::before {
+    content:"";
+    position:absolute;
+    inset:-1px;
+    padding:1px;
+    border-radius:inherit;
+    pointer-events:none;
+    background:linear-gradient(151deg,var(--rim-light),var(--rim) 34%,var(--rim-shade) 70%,var(--rim) 100%);
+    mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+    mask-composite:exclude;
+  }
+}
+@media (forced-colors:active) {
+  .glass { border-color:CanvasText; }
+  .glass::before { display:none; }
+}
+@supports (backdrop-filter:blur(1px)) {
+  .glass { background:var(--glass); backdrop-filter:blur(var(--blur)) saturate(145%); }
+  [data-material="clear"] .glass { background:var(--glass-clear); }
+}
+.nav a { text-shadow:0 1px 8px var(--canvas); }
+[data-material="opaque"] .glass { background:var(--surface); backdrop-filter:none; }
+.nav { display:flex; flex-wrap:wrap; gap:4px; align-self:flex-end; padding:6px; border-radius:32px; }
+.nav a { display:grid; place-items:center; padding:8px 16px; text-decoration:none; font-weight:600; }
+.nav a:hover,.nav a[aria-current] { background:color-mix(in srgb,var(--canvas) 62%,transparent); }
+.nav a[aria-current] { box-shadow:inset 0 0 0 1px var(--line); }
+@media (forced-colors:active) { .nav a[aria-current] { outline:1px solid LinkText; outline-offset:-2px; } }
+section { margin:48px 0; scroll-margin-top:24px; }
+.section-head { display:flex; align-items:end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:24px; }
+h2 { font-size:clamp(40px,6vw,68px); }
+h3 { margin:0 0 8px; font-size:18px; }
+p { margin:8px 0 0; }
+.muted { color:var(--muted); }
+.controls { display:flex; gap:8px; flex-wrap:wrap; }
+.glass-sample { display:flex; justify-content:flex-end; align-items:end; min-height:170px; padding:16px; margin-bottom:16px; border-radius:var(--radius); background:#352625 url("les-heures-bleues.webp") 76% 50% / cover no-repeat; }
+.sample-label { padding:10px 16px; border-radius:99px; font-weight:700; }
+.palette-grid { display:grid; gap:16px; }
+@media(min-width:768px) { .palette-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+.palette-card { padding:16px; border:1px solid var(--panel-line); border-radius:var(--radius); }
+.palette-card h3 { margin-bottom:16px; }
+.swatches { display:grid; grid-template-columns:repeat(auto-fit,minmax(125px,1fr)); gap:8px; }
+.swatch { background:var(--surface); border:1px solid var(--panel-line); border-radius:16px; overflow:hidden; padding:8px; font-size:14px; }
+.swatch i { display:block; height:84px; border:1px solid var(--panel-line); border-radius:10px; background:var(--sample); margin-bottom:8px; }
+.swatch span { display:block; color:var(--muted); }
+.booking { display:grid; gap:16px; }
+.panel { padding:24px; border:1px solid var(--panel-line); border-radius:var(--radius); background:var(--surface); min-width:0; }
+.film { font-size:clamp(42px,6vw,72px); }
+.film-panel { background:radial-gradient(ellipse at 100% 0%,color-mix(in srgb,var(--decor) 23%,transparent),transparent 66%),var(--surface); }
+.film-panel p { max-width:34ch; }
+.session { margin:16px 0 24px; }
+.session button { text-align:left; }
+.session button span { display:block; font-size:14px; }
+.auditorium {
+  --auditorium-ink:#fff9eb;
+  position:relative;
+  padding:20px 8px 16px;
+  border:1px solid #73483b;
+  border-radius:18px;
+  color:var(--auditorium-ink);
+  background:
+    radial-gradient(ellipse at 50% 18%,#603b34 0%,transparent 58%),
+    linear-gradient(100deg,#63251e,transparent 24%,transparent 76%,#63251e),
+    #180e10;
+}
+.auditorium h3,.seat-legend { text-align:center; }
+.auditorium :focus-visible { outline-color:var(--auditorium-ink); }
+.screen {
+  display:grid; place-items:center; width:min(85%,290px); min-height:58px;
+  margin:12px auto 28px; border-radius:50% 50% 7px 7px / 15% 15% 7px 7px;
+  background:linear-gradient(rgb(28 17 18 / 60%),rgb(28 17 18 / 82%)),url("les-heures-bleues.webp") 64% 49% / cover;
+  border:1px solid #ffe0bd; box-shadow:0 6px 26px #ffbca45c;
+  font-size:14px; letter-spacing:.1em; text-transform:uppercase;
+}
+.seats { display:grid; grid-template-columns:repeat(4,minmax(44px,56px)); gap:8px; justify-content:center; }
+.seats button {
+  padding:4px; border-radius:12px 12px 6px 6px;
+  background:#592921; color:var(--auditorium-ink); border-color:#bb8170;
+  box-shadow:inset 0 -5px 0 #29161966;
+}
+.seats button:disabled { border-style:dashed; }
+.seats button[aria-pressed="true"] { background:var(--accent); color:var(--on-accent); border-color:var(--accent); }
+.seats button[aria-pressed="true"]::after { content:" ✓"; }
+.seat-legend { color:#f0cec2; font-size:14px; }
+.summary { display:flex; gap:16px; align-items:center; justify-content:space-between; flex-wrap:wrap; padding:16px; margin-top:24px; border-radius:var(--radius); }
+.feedback { margin-top:16px; color:var(--danger); }
+.feedback:empty { display:none; }
+.ticket { margin-top:16px; border:1px dashed var(--muted); border-radius:16px; padding:16px; }
+.ticket button { margin-top:8px; }
+#ticket-status { color:var(--success); }
+#ticket-status.cancelled { color:var(--danger); }
+footer { border-top:1px solid var(--line); padding:24px 0 32px; color:var(--muted); font-size:14px; }
+@media(min-width:768px) { .booking { grid-template-columns:1fr 1fr; } }
+@media(max-width:550px) {
+  .hero { min-height:clamp(540px,80svh,720px); padding:24px; }
+  .hero::before {
+    background:
+      linear-gradient(0deg,rgb(12 9 10 / 95%) 0%,rgb(12 9 10 / 77%) 42%,transparent 83%),
+      url("les-heures-bleues.webp") 63% center / cover no-repeat;
+  }
+  .nav { align-self:flex-start; }
+  .nav a { padding-inline:10px; }
+  .panel { padding:16px; }
+}
+@media(prefers-reduced-motion:reduce) { *,*::before,*::after { transition:none !important; } }
+@media(prefers-reduced-transparency:reduce) {
+  .glass, [data-material="clear"] .glass { background:var(--surface); backdrop-filter:none; }
+}
+</style>
+</head>
+<body>
+<header class="wrap mast">
+  <span class="brand">Ciné Lumière</span>
+  <div class="controls">
+    <button type="button" data-theme-choice="light" aria-pressed="false">Clair</button>
+    <button type="button" data-theme-choice="dark" aria-pressed="true">Sombre</button>
+    <a class="spec" href="design.md">Spécification ↗</a>
+    <a class="spec" href="mobile.html">Maquette smartphone ↗</a>
+  </div>
+</header>
+<main>
+  <div class="hero" id="material-preview" data-material="standard">
+    <div>
+      <p class="eyebrow">À l’affiche · Drame · 1 h 48</p>
+      <h1>Les Heures <em>bleues</em></h1>
+      <p>Une projectionniste retrouve une bobine oubliée et remonte le fil d’une nuit disparue.</p>
+      <a class="hero-action" href="#reservation">Voir les séances</a>
+    </div>
+    <nav class="glass nav" aria-label="Navigation de démonstration">
+      <a href="#reservation" aria-current="location">À l’affiche</a>
+      <a href="#billets">Billets</a>
+      <a href="#compte">Compte</a>
+    </nav>
+  </div>
+
+  <div class="wrap">
+  <section id="reservation" aria-labelledby="booking-title">
+    <div class="section-head">
+      <div><p class="eyebrow">Composants en situation</p><h2 id="booking-title">Réserver une séance</h2></div>
+      <span class="muted">Démonstration · 12 € par place</span>
+    </div>
+    <div class="booking">
+      <article class="panel film-panel">
+        <p class="eyebrow">À l’affiche</p>
+        <h3 class="film">Les Heures bleues</h3>
+        <p class="muted">Drame · 1 h 48</p>
+        <p>Une projectionniste retrouve une bobine oubliée et remonte le fil d’une nuit disparue.</p>
+      </article>
+      <div class="panel">
+        <h3>Séances du samedi</h3>
+        <div class="controls session">
+          <button id="session" type="button" aria-pressed="false" aria-controls="seat-plan">20 h 30 <span>VF · Salle 4</span></button>
+          <button type="button" disabled>22 h 15 <span>VF · Complet</span></button>
+        </div>
+        <div id="seat-plan" hidden>
+          <div class="auditorium">
+            <h3>Choisir deux sièges</h3>
+            <div class="screen"><span>Écran</span></div>
+          <div class="seats" role="group" aria-label="Rangée A">
+            <button type="button" disabled aria-label="A1, occupé">×</button>
+            <button type="button" data-seat="A2" aria-pressed="false">A2</button>
+            <button type="button" data-seat="A3" aria-pressed="false">A3</button>
+            <button type="button" data-seat="A4" aria-pressed="false">A4</button>
+          </div>
+            <p class="seat-legend">× Occupé · ✓ Sélectionné</p>
+          </div>
+          <div class="glass summary">
+            <strong id="total" role="status">0 place · 0 €</strong>
+            <button class="primary" type="button" id="pay" disabled>Confirmer le paiement</button>
+          </div>
+          <p class="feedback" id="feedback" role="alert"></p>
+        </div>
+      </div>
+      <article class="panel" id="billets">
+        <h3>Billets</h3>
+        <p id="empty-ticket" class="muted">Votre billet apparaîtra ici après confirmation.</p>
+        <div class="ticket" id="ticket" hidden>
+          <strong>Les Heures bleues</strong>
+          <p>Samedi · 20 h 30 · Salle 4 · <span id="ticket-seats"></span></p>
+          <p role="status" id="ticket-status"></p>
+          <button type="button" id="cancel">Annuler la réservation</button>
+        </div>
+      </article>
+      <article class="panel" id="compte">
+        <h3>Compte</h3>
+        <p>Carte d’abonné</p>
+        <p class="muted">Historique des réservations</p>
+      </article>
+    </div>
+  </section>
+
+  <section aria-labelledby="materials">
+    <div class="section-head">
+      <div><p class="eyebrow" id="theme-name">Sérigraphie de nuit</p><h2 id="materials">Matière &amp; couleur</h2></div>
+      <div class="controls" role="group" aria-label="Matière de la navigation">
+        <button type="button" data-material="standard" aria-pressed="true" aria-controls="material-preview material-sample">Standard</button>
+        <button type="button" data-material="clear" aria-pressed="false" aria-controls="material-preview material-sample">Clair</button>
+        <button type="button" data-material="opaque" aria-pressed="false" aria-controls="material-preview material-sample">Opaque</button>
+      </div>
+    </div>
+    <div class="glass-sample" id="material-sample" data-material="standard" aria-label="Aperçu de la matière">
+      <p class="glass sample-label" id="material-label">Verre standard</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="palette-title">
+    <div class="section-head"><h2 id="palette-title">Nuanciers</h2></div>
+    <div class="palette-grid" id="palettes"></div>
+  </section>
+  </div>
+</main>
+<footer class="wrap">Ciné Lumière · Planche du système de design</footer>
+<script>
+const themeButtons = document.querySelectorAll('[data-theme-choice]');
+const themeName = document.querySelector('#theme-name');
+const paletteGrid = document.querySelector('#palettes');
+const colorRoles = [
+  ['canvas', 'Fond'], ['surface', 'Surface'], ['decor', 'Décor'],
+  ['signal', 'Rouge signal'], ['accent', 'Action'], ['on-accent', 'Texte du bouton'],
+  ['ink', 'Texte'], ['muted', 'Secondaire'], ['danger', 'Erreur'], ['success', 'Succès']
+];
+
+function setTheme(theme) {
+  const root = document.documentElement;
+  root.dataset.theme = theme;
+  themeName.textContent = theme === 'light' ? 'Affiche sérigraphiée' : 'Sérigraphie de nuit';
+  for (const button of themeButtons) {
+    button.setAttribute('aria-pressed', button.dataset.themeChoice === theme);
+  }
+}
+
+function renderPalettes() {
+  const root = document.documentElement;
+  const current = root.dataset.theme;
+  for (const [theme, title] of [
+    ['light', 'Affiche sérigraphiée'], ['dark', 'Sérigraphie de nuit']
+  ]) {
+    root.dataset.theme = theme;
+    const styles = getComputedStyle(root);
+    const card = document.createElement('article');
+    card.className = 'palette-card';
+    const samples = colorRoles.map(([role, label]) => {
+      const value = styles.getPropertyValue('--' + role).trim().toUpperCase();
+      return `<div class="swatch" style="--sample:${value}"><i aria-hidden="true"></i>${label}<span>${value}</span></div>`;
+    }).join('');
+    card.innerHTML = `<h3>${title}</h3><div class="swatches">${samples}</div>`;
+    paletteGrid.append(card);
+  }
+  root.dataset.theme = current;
+}
+
+for (const button of themeButtons) {
+  button.addEventListener('click', () => setTheme(button.dataset.themeChoice));
+}
+setTheme(matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+renderPalettes();
+
+const preview = document.querySelector('#material-preview');
+const materials = document.querySelectorAll('button[data-material]');
+const destinations = document.querySelectorAll('.nav a');
+const session = document.querySelector('#session');
+const seatPlan = document.querySelector('#seat-plan');
+const seats = [...document.querySelectorAll('[data-seat]')];
+const total = document.querySelector('#total');
+const pay = document.querySelector('#pay');
+const feedback = document.querySelector('#feedback');
+const ticket = document.querySelector('#ticket');
+const ticketStatus = document.querySelector('#ticket-status');
+const cancel = document.querySelector('#cancel');
+let paymentAttempted = false;
+
+for (const button of materials) {
+  button.addEventListener('click', () => {
+    const material = button.dataset.material;
+    preview.dataset.material = material;
+    document.querySelector('#material-sample').dataset.material = material;
+    document.querySelector('#material-label').textContent = {
+      standard: 'Verre standard', clear: 'Verre clair', opaque: 'Surface opaque'
+    }[material];
+    for (const option of materials) option.setAttribute('aria-pressed', option === button);
+  });
+}
+for (const destination of destinations) {
+  destination.addEventListener('click', () => {
+    for (const link of destinations) link.removeAttribute('aria-current');
+    destination.setAttribute('aria-current', 'location');
+  });
+}
+session.addEventListener('click', () => {
+  seatPlan.hidden = !seatPlan.hidden;
+  session.setAttribute('aria-pressed', !seatPlan.hidden);
+});
+function selectedSeats() {
+  return seats.filter(seat => seat.getAttribute('aria-pressed') === 'true');
+}
+for (const seat of seats) {
+  seat.addEventListener('click', () => {
+    const pressed = seat.getAttribute('aria-pressed') === 'true';
+    if (!pressed && selectedSeats().length === 2) {
+      feedback.textContent = 'Retirez un siège de la sélection pour en choisir un autre.';
+      return;
+    }
+    seat.setAttribute('aria-pressed', !pressed);
+    const count = selectedSeats().length;
+    total.textContent = count + (count === 2 ? ' places' : ' place') + ' · ' + count * 12 + ' €';
+    pay.disabled = count !== 2;
+    feedback.textContent = '';
+  });
+}
+pay.addEventListener('click', () => {
+  if (!paymentAttempted) {
+    paymentAttempted = true;
+    feedback.textContent = 'Paiement refusé. Vos sièges sont conservés. Vous pouvez réessayer.';
+    pay.textContent = 'Réessayer';
+    return;
+  }
+  feedback.textContent = '';
+  document.querySelector('#ticket-seats').textContent = selectedSeats().map(seat => seat.dataset.seat).join(', ');
+  document.querySelector('#empty-ticket').hidden = true;
+  ticket.hidden = false;
+  ticketStatus.textContent = 'Billet confirmé';
+  pay.disabled = true;
+  session.disabled = true;
+  for (const seat of seats) seat.disabled = true;
+  cancel.focus();
+});
+cancel.addEventListener('click', () => {
+  ticketStatus.textContent = 'Annulé';
+  ticketStatus.classList.add('cancelled');
+  ticketStatus.tabIndex = -1;
+  ticketStatus.focus();
+  cancel.hidden = true;
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+.aws/
+.agents/
+.codex/
+.codex-attachments/
+.env
+.env.*
+*.log
+__pycache__/
+.DS_Store

@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Palettes rouges — Ciné Lumière</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+* { box-sizing:border-box }
+body { margin:0; background:#151115; color:#fff4f3; font:16px/1.5 "DM Sans",system-ui,sans-serif; color-scheme:dark }
+main, header { width:min(1120px, calc(100% - 32px)); margin:auto }
+header { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:18px 0; border-bottom:1px solid #594047 }
+header strong { letter-spacing:.14em; text-transform:uppercase; font-size:14px }
+a { color:inherit; text-underline-offset:4px }
+.intro { padding:42px 0 32px }
+h1,h2,.film { font:400 1em/1 "Instrument Serif",Georgia,serif; margin:0 }
+h1 { font-size:clamp(56px,10vw,108px); letter-spacing:-.025em }
+h1 em { color:#ff9a9f }
+h2 { font-size:clamp(36px,5vw,52px) }
+.section-title { margin:0 0 16px }
+#light-palette { grid-template-columns:minmax(0,1fr); max-width:760px }
+p { margin:8px 0 0 }
+.intro p { color:#dbc2c6 }
+.grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; padding-bottom:48px }
+.card { background:var(--canvas); color:var(--ink); border:1px solid #775660; border-radius:24px; overflow:hidden; min-width:0 }
+.card header { width:auto; display:block; padding:22px; border:0 }
+.card header p { color:var(--muted) }
+.preview { background:linear-gradient(110deg,var(--canvas) 5%,color-mix(in srgb,var(--canvas) 92%,transparent) 52%,transparent 100%),radial-gradient(ellipse at 84% 25%,var(--accent),var(--deep) 55%); min-height:196px; padding:18px 20px; display:flex; flex-direction:column; justify-content:space-between; gap:24px }
+.film { font-size:36px }
+.preview small { font-size:14px }
+.glass { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; padding:6px 6px 6px 14px; border:1px solid color-mix(in srgb,var(--ink) 30%,transparent); border-radius:24px; background:var(--surface); box-shadow:inset 0 1px #ffffff35, 0 8px 20px #0004 }
+@supports (backdrop-filter:blur(20px)) { .glass { background:color-mix(in srgb,var(--surface) 84%,transparent); backdrop-filter:blur(20px) saturate(145%) } }
+.chip { display:inline-flex; align-items:center; border-radius:99px; min-height:44px; padding:8px 14px; background:var(--accent); color:var(--on-accent); font-weight:700 }
+.swatches { display:grid; grid-template-columns:repeat(auto-fit,minmax(100px,1fr)); gap:8px; padding:14px 20px 20px; background:var(--surface) }
+.swatch { min-width:0; min-height:44px; background:var(--canvas); color:var(--ink); border:1px solid color-mix(in srgb,var(--ink) 36%,transparent); border-radius:10px; padding:5px; font:inherit; cursor:pointer; text-align:left }
+.swatch:hover { border-color:var(--accent) }
+.swatch:focus-visible { outline:3px solid var(--ink); outline-offset:3px }
+a:focus-visible { outline:3px solid #fff; outline-offset:3px }
+.swatch i { display:block; background:var(--sample); border:1px solid #ffffff40; height:24px; border-radius:5px; margin-bottom:4px }
+.swatch span,.swatch code { display:block; font-size:13px }
+.swatch code { color:var(--muted) }
+#status { position:fixed; bottom:12px; left:50%; transform:translateX(-50%); margin:0; padding:8px 14px; max-width:calc(100% - 24px); border-radius:12px; background:#fff4f3; color:#151115 }
+#status:empty { padding:0 }
+@media (max-width:730px) { .grid { grid-template-columns:1fr } }
+@media (prefers-reduced-transparency:reduce) { .glass { background:var(--surface); backdrop-filter:none } }
+</style>
+</head>
+<body>
+<header><strong>Ciné Lumière</strong><a href="design.html">Planche Liquid Glass</a></header>
+<main>
+  <div class="intro">
+    <h1>Le rouge <em>en salle</em></h1>
+    <p>Comparez le thème clair retenu à quatre pistes sombres sur une même séance. Cliquez sur une couleur pour copier son code hexadécimal.</p>
+  </div>
+  <section aria-labelledby="light-title">
+    <h2 class="section-title" id="light-title">Thème clair retenu</h2>
+    <div class="grid" id="light-palette"></div>
+  </section>
+  <section aria-labelledby="dark-title">
+    <h2 class="section-title" id="dark-title">Pistes pour le thème sombre</h2>
+    <div class="grid" id="dark-palettes"></div>
+  </section>
+</main>
+<p id="status" role="status"></p>
+<script>
+const palettes = [
+  ['Affiche sérigraphiée', 'Papier ivoire, rouge signal et encre noire.', '#FFF9EB', '#F5EBD7', '#E63929', '#B51C18', '#241714', '#65483D', '#FFFFFF'],
+  ['Sérigraphie de nuit', 'Encre noire, texte ivoire et le même rouge signal que sur l’affiche claire.', '#171412', '#292320', '#703029', '#E63929', '#FFF9EB', '#D8C9B6', '#120C09'],
+  ['Projection carbone', 'Noir et gris neutres. Le rouge franc est concentré sur le bouton.', '#121214', '#212124', '#37373C', '#FF4136', '#F8F8FA', '#C6C6CF', '#101012'],
+  ['Cabine de projection', 'Fond bleu ardoise, reflet acier et rouge orangé de voyant.', '#111A24', '#1D2A38', '#3C5267', '#FF6047', '#F3F7FC', '#C0CBD8', '#16100E'],
+  ['Émail et bronze', 'Brun graphite, reflet bronze et rouge vermillon sur la commande.', '#211A15', '#342920', '#75563A', '#FF664D', '#FFF2DF', '#D7C1A8', '#1D100C']
+];
+const roles = [
+  ['canvas','Fond'], ['surface','Surface'], ['deep','Décor'],
+  ['accent','Accent'], ['ink','Texte'], ['muted','Secondaire'], ['on-accent','Texte du bouton']
+];
+const lightGrid = document.querySelector('#light-palette');
+const darkGrid = document.querySelector('#dark-palettes');
+const status = document.querySelector('#status');
+let statusTimer;
+for (const [index, [name, description, ...colors]] of palettes.entries()) {
+  const card = document.createElement('article');
+  card.className = 'card';
+  roles.forEach(([variable], index) => card.style.setProperty('--' + variable, colors[index]));
+  card.innerHTML = `<header><h2>${name}</h2><p>${description}</p></header>
+    <div class="preview"><div><small>À l’affiche</small><p class="film">Les Heures bleues</p></div>
+    <div class="glass"><span>20 h 30 · Salle 4</span><span class="chip">Réserver</span></div></div>
+    <div class="swatches">${roles.map(([variable, label], index) => `
+      <button type="button" class="swatch" data-color="${colors[index]}" style="--sample:var(--${variable})">
+        <i aria-hidden="true"></i><span>${label}</span><code>${colors[index]}</code>
+      </button>`).join('')}</div>`;
+  const grid = index === 0 ? lightGrid : darkGrid;
+  grid.append(card);
+}
+document.querySelector('main').addEventListener('click', async event => {
+  const swatch = event.target.closest('[data-color]');
+  if (!swatch) return;
+  const color = swatch.dataset.color;
+  try {
+    await navigator.clipboard.writeText(color);
+    status.textContent = color + ' copié';
+  } catch {
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(swatch.querySelector('code'));
+    selection.removeAllRanges();
+    selection.addRange(range);
+    status.textContent = color + ' sélectionné. Utilisez le raccourci de copie.';
+  }
+  clearTimeout(statusTimer);
+  statusTimer = setTimeout(() => { status.textContent = ''; }, 2600);
+});
+</script>
+</body>
+</html>
