@@ -207,6 +207,24 @@
     for (const [index, seat] of seats.entries()) {
       const [x,y,z] = seatPosition(seat);
       const upholstery = seat.occupied ? ['413538','504247','382c30'] : ['84212b','a32a37','681822'];
+      if (seat.wheelchair) {
+        // A level wheelchair bay, rather than a conventional cinema chair.
+        box([x,y+.025,z],[.86,.035,1.03],'234554',.008,0,index);
+        for (const side of [-1,1]) {
+          box([x+side*.42,y+.05,z],[.025,.018,1.02],'8dd9ee',0,1);
+        }
+        box([x,y+.05,z+.5],[.86,.018,.025],'8dd9ee',0,1);
+        if (seat.occupied) {
+          box([x,y+.48,z-.02],[.58,.12,.56],'354751',.04);
+          box([x,y+.76,z+.23],[.58,.55,.10],'354751',.03);
+          for (const side of [-1,1]) {
+            personPart([x+side*.34,y+.34,z+.03],[.055,.32,.32],'12181d');
+            personPart([x+side*.39,y+.34,z+.03],[.012,.25,.25],'9cabb1');
+            personPart([x+side*.27,y+.12,z-.37],[.035,.10,.10],'172329');
+            box([x+side*.28,y+.67,z-.03],[.045,.045,.52],'9cabb1',.012);
+          }
+        }
+      } else {
       box([x,y+.233,z+.077],[.67,.46,.58],'20191b',.035);
       box([x,y+.48,z-.074],[.79,.23,.65],upholstery[0],.07,0,index);
       box([x,y+.83,z+.285],[.85,.94,.24],upholstery[0],.082,0,index,.16);
@@ -216,11 +234,12 @@
         box([x+sign*.423,y+.55,z+.04],[.105,.44,.64],'272122',.024);
         box([x+sign*.423,y+.78,z+.015],[.143,.105,.72],'4e3b3b',.038);
       }
+      }
       const column = index % 8;
       const line = Math.floor(index / 8);
       const u=column/8;
       const v=line/atlas.rows;
-      panel(x-.115,x+.115,y+.912,y+1.033,z+.464,'fff4e0',3,
+      panel(x-(seat.wheelchair ? .25 : .115),x+(seat.wheelchair ? .25 : .115),y+(seat.wheelchair ? .08 : .912),y+(seat.wheelchair ? .28 : 1.033),z+.52,'fff4e0',3,
         [[u,v+1/atlas.rows],[u+1/8,v+1/atlas.rows],[u+1/8,v],[u,v]]);
       if (seat.occupied) {
         const offset = index % 3 * .045;
@@ -251,7 +270,8 @@
       context.fillStyle = '#2c1e21';
       context.fillRect(x,y,64,32);
       context.fillStyle = seat.occupied ? '#bcaaa5' : '#ffe6ce';
-      context.fillText(seat.id,x+32,y+16);
+      context.font = seat.wheelchair ? '700 13px system-ui, sans-serif' : '700 19px system-ui, sans-serif';
+      context.fillText(seat.id + (seat.wheelchair ? ' PMR' : ''),x+32,y+16);
     }
     return {bitmap,rows};
   }
@@ -260,12 +280,15 @@
     const gl = canvas.getContext('webgl', {alpha:false, antialias:true, powerPreference:'low-power'});
     if (!gl || typeof ResizeObserver === 'undefined' || seats.length > 64) return null;
     const atlas = buildAtlas(seats);
-    const room = buildRoom(seats,atlas);
+    let room = buildRoom(seats,atlas);
     const states = new Uint8Array(64*4);
     const media = matchMedia('(prefers-reduced-motion: reduce)');
     let active = false;
     let camera = overview;
     let destination = overview;
+    let lookAnchor;
+    let yawOffset = 0;
+    let pitchOffset = 0;
     let animation = 0;
     let frame;
     let graphics;
@@ -348,7 +371,7 @@
       gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,atlas.bitmap);
       const screen = texture(2,uniforms.uScreen);
       gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array([0,0,0,255]));
-      graphics = {uniforms,palette,screen};
+      graphics = {uniforms,palette,screen,buffer};
       lastVideoTime = -1;
       screenFit = undefined;
     }
@@ -476,15 +499,22 @@
       if (!seat) return;
       const [x,y,z] = seatPosition(seat);
       canvas.style.cursor = '';
-      go({eye:[x,y+1.25,z+.08],target:[0,2.79,-6.9],lens:.8});
+      const eye = [x,y+(seat.wheelchair ? 1.16 : 1.25),z+.08];
+      const target = [0,2.79,-6.9];
+      const forward = unit(subtract(target,eye));
+      lookAnchor = {yaw:Math.atan2(forward[0],-forward[2]),pitch:Math.asin(forward[1])};
+      yawOffset = pitchOffset = 0;
+      go({eye,target,lens:.8});
     }
 
     function look(horizontal, vertical) {
-      if (!active || destination === overview) return;
+      if (!active || destination === overview || !lookAnchor) return;
       cancelAnimationFrame(frame);
-      const forward = unit(subtract(destination.target,destination.eye));
-      const yaw = Math.atan2(forward[0],-forward[2]) + horizontal;
-      const pitch = Math.max(-1.25,Math.min(1.25,Math.asin(forward[1]) + vertical));
+      // Restrict the seated gaze around the screen, with no camera translation.
+      yawOffset = Math.max(-.44,Math.min(.44,yawOffset + horizontal));
+      pitchOffset = Math.max(-.21,Math.min(.21,pitchOffset + vertical));
+      const yaw = lookAnchor.yaw + yawOffset;
+      const pitch = Math.max(-1.25,Math.min(1.25,lookAnchor.pitch + pitchOffset));
       const direction = [Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(yaw)*Math.cos(pitch)];
       camera = {...destination,target:add(destination.eye,direction)};
       destination = camera;
@@ -503,8 +533,8 @@
       let nearest = Infinity;
       for (const seat of seats) {
         const p = seatPosition(seat);
-        const minimum = add(p,[-.45,.31,-.47]);
-        const maximum = add(p,[.45,1.31,.50]);
+        const minimum = add(p,[-.45,seat.wheelchair ? .015 : .31,-.52]);
+        const maximum = add(p,[.45,seat.wheelchair && !seat.occupied ? .29 : 1.6,.54]);
         let near = 0;
         let far = Infinity;
         for (let axis=0;axis<3;axis++) {
@@ -652,7 +682,18 @@
     return {
       showSeat,
       setVideo,
-      showOverview() { stopLooking(); go(overview); },
+      showOverview() { stopLooking(); lookAnchor = undefined; go(overview); },
+      setOccupied(ids) {
+        const occupied = new Set(ids);
+        if (!seats.some(seat => seat.occupied !== occupied.has(seat.id))) return;
+        for (const seat of seats) seat.occupied = occupied.has(seat.id);
+        room = buildRoom(seats,atlas);
+        if (graphics) {
+          gl.bindBuffer(gl.ARRAY_BUFFER,graphics.buffer);
+          gl.bufferData(gl.ARRAY_BUFFER,room,gl.STATIC_DRAW);
+          render();
+        }
+      },
       setSelection(ids) {
         const selection = new Set(ids);
         for (const [index,seat] of seats.entries()) states[index*4] = selection.has(seat.id) ? 255 : 0;

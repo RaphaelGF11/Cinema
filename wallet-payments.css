@@ -1,0 +1,87 @@
+/* Distinct wallet presentations: bottom sheets on phones, centered dialogs on larger screens. */
+.payment-wallets { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+#google-pay { display:flex; gap:5px; align-items:center; justify-content:center; width:100%; min-height:54px; border:1px solid #bbb; border-radius:14px; background:#080808; color:white; font:500 18px/1 Arial,sans-serif; }
+.google-mark { width:25px; height:25px; flex-shrink:0; }
+#google-pay .google-mark { margin-left:5px; }
+#google-pay > .google-pay-word { font-size:23px; font-weight:400; }
+.apple-desktop-icon { display:none; }
+#google-pay-sheet { box-sizing:border-box; position:fixed; inset:auto 0 0; margin:0 auto; width:min(100%,480px); max-width:100%; max-height:94dvh; overflow:auto; padding:0; border:0; border-radius:28px 28px 0 0; background:#fff; color:#202124; box-shadow:0 20px 80px #0005; font:14px/1.45 Arial,sans-serif; color-scheme:light; }
+#google-pay-sheet::backdrop { background:#0006; backdrop-filter:blur(5px); }
+#google-pay-sheet[open] { animation:payment-sheet-enter 360ms cubic-bezier(.16,1,.3,1) both; }
+#google-pay-sheet.is-closing { animation:payment-sheet-exit 240ms ease-in both; }
+.google-grabber { width:36px; height:4px; border-radius:4px; background:#dadce0; margin:10px auto 0; }
+.google-heading { display:flex; justify-content:space-between; align-items:center; padding:16px 24px 8px; }
+.google-heading h2 { display:flex; align-items:center; gap:3px; margin:0; font:400 30px/1 Arial,sans-serif; letter-spacing:-1px; }
+.google-heading .google-mark { width:33px; height:33px; }
+#google-pay-close { display:grid; place-items:center; padding:0; width:44px; height:44px; border:0; border-radius:50%; background:transparent; color:#5f6368; font:400 28px/1 Arial,sans-serif; }
+#google-pay-close:hover { background:#f1f3f4; }
+.google-content { padding:0 24px; }
+#google-pay-demo { margin:0 0 16px; color:#5f6368; font-size:11px; }
+.google-account { display:flex; align-items:center; gap:10px; padding-bottom:20px; border-bottom:1px solid #e8eaed; }
+.google-avatar { display:grid; place-items:center; width:32px; height:32px; border-radius:50%; background:#e8f0fe; color:#1967d2; font-size:16px; }
+.google-account strong,.google-account small,.google-cards strong,.google-cards small { display:block; }
+.google-account strong { font-size:13px; font-weight:500; }
+.google-account small,.google-cards small { color:#5f6368; font-size:12px; }
+.google-merchant { display:flex; gap:12px; padding:22px 0; }
+.google-merchant-icon { display:grid; place-items:center; flex:none; width:40px; height:40px; border-radius:10px; background:#fce8e6; color:#a50e0e; font-size:12px; font-weight:700; }
+.google-merchant h3 { margin:0 0 7px; font:500 18px/1.3 Arial,sans-serif; }
+.google-merchant p { margin:3px 0; font-size:13px; overflow-wrap:anywhere; }
+.google-cards { margin:0; padding:0; min-width:0; border:0; }
+.google-cards legend { padding:0 0 8px; font-size:12px; color:#5f6368; }
+.google-cards label { display:flex; align-items:center; gap:12px; min-height:72px; padding:10px 12px; border:1px solid #dadce0; border-radius:12px; cursor:pointer; }
+.google-cards label + label { margin-top:8px; }
+.google-cards label:has(input:checked) { border-color:#1a73e8; background:#f8faff; }
+.google-cards input { accent-color:#1a73e8; width:18px; height:18px; flex-shrink:0; margin:0; }
+.google-cards strong { font-size:13px; font-weight:500; }
+.google-card-art { display:grid; place-items:center; width:40px; height:27px; border:1px solid #dadce0; border-radius:4px; background:#252830; color:#fff; font-size:11px; font-weight:700; flex-shrink:0; }
+.google-visa { color:#1a1f71; background:white; font-style:italic; }
+#google-pay-feedback { min-height:38px; margin:18px 0 8px; font-size:12px; color:#5f6368; }
+#google-pay-sheet[data-state="declined"] #google-pay-feedback { color:#b3261e; }
+.google-footer { position:sticky; bottom:0; display:flex; flex-direction:column; gap:16px; padding:16px 24px calc(24px + env(safe-area-inset-bottom)); border-top:1px solid #e8eaed; background:#fff; }
+.google-footer > div { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.google-footer strong { font-size:22px; font-weight:500; }
+#google-pay-confirm { display:flex; align-items:center; justify-content:center; gap:10px; min-height:48px; padding:12px 24px; border:0; border-radius:24px; background:#1a73e8; color:#fff; font:500 14px/1.3 Arial,sans-serif; }
+#google-pay-confirm:disabled { opacity:1; background:#185abc; cursor:default; }
+.google-payment-spinner { display:none; width:18px; height:18px; border:2px solid #ffffff55; border-top-color:#fff; border-radius:50%; animation:wallet-spin .75s linear infinite; }
+.google-payment-check { display:none; width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
+#google-pay-sheet[data-state="processing"] .google-payment-spinner { display:block; }
+#google-pay-sheet[data-state="success"] .google-payment-check { display:block; animation:wallet-success 300ms ease-out both; }
+#google-pay-sheet button:focus-visible,#google-pay-sheet input:focus-visible { outline:3px solid #174ea6; outline-offset:3px; }
+@media (min-width:700px) {
+  .payment-wallets { grid-template-columns:1fr 1fr; }
+  #apple-pay-sheet { inset:0; margin:auto; width:440px; max-width:calc(100% - 48px); height:fit-content; max-height:calc(100dvh - 48px); border-radius:22px; padding:24px 28px; box-shadow:0 24px 100px #0006; }
+  #apple-pay-sheet .wallet-grabber,#apple-pay-sheet .wallet-side-button { display:none; }
+  #apple-pay-sheet .apple-desktop-icon { display:block; }
+  #apple-pay-sheet .face-id-icon,#apple-pay-sheet .wallet-scan { display:none; }
+  #apple-pay-sheet:is([data-state="processing"],[data-state="success"]) .apple-desktop-icon { opacity:0; }
+  #apple-pay-sheet .wallet-auth { min-height:142px; }
+  #apple-pay-sheet[open],#google-pay-sheet[open] { animation:wallet-dialog-enter 240ms cubic-bezier(.22,1,.36,1) both; }
+  #apple-pay-sheet.is-closing,#google-pay-sheet.is-closing { animation:wallet-dialog-exit 200ms ease-in both; }
+  #google-pay-sheet { inset:0; margin:auto; width:520px; height:fit-content; max-height:calc(100dvh - 48px); border-radius:16px; }
+  .google-grabber { display:none; }
+  .google-heading { padding-top:22px; }
+  .google-content { padding-inline:32px; }
+  .google-footer { flex-direction:row; align-items:center; justify-content:space-between; padding:20px 32px; }
+  .google-footer > div { flex-direction:column; gap:2px; align-items:flex-start; }
+  .google-footer > div > span { font-size:12px; color:#5f6368; }
+  #google-pay-confirm { min-width:180px; }
+}
+@keyframes wallet-dialog-enter { from { opacity:0; transform:translateY(14px) scale(.96); } to { opacity:1; transform:none; } }
+@keyframes wallet-dialog-exit { to { opacity:0; transform:translateY(8px) scale(.97); } }
+@media (prefers-reduced-motion:reduce) {
+  #google-pay-sheet[open],#google-pay-sheet.is-closing,#google-pay-sheet *,#apple-pay-sheet[open],#apple-pay-sheet.is-closing { animation:none !important; }
+}
+
+/* Keep both wallets equally visible on phones, without a second button below the fold. */
+@media (max-width:699px) {
+  .payment-wallets .wallet-button-lead { display:none; }
+  .payment-wallets > button { min-width:0; }
+  #payment .payment-recap { gap:14px; margin:20px 0; }
+  #payment .payment-recap img { width:64px; }
+  #payment .payment-recap h3 { font-size:26px; margin-bottom:8px; }
+  #payment .payment-details { padding:16px; }
+  #payment .payment-details > div { margin-bottom:12px; }
+  #payment .payment-details .payment-total { margin-bottom:0; margin-top:12px; padding-top:12px; }
+  #payment .payment-method { margin-top:22px; }
+  #payment .payment-method h3 { margin-bottom:12px; }
+}

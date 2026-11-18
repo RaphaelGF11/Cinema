@@ -123,3 +123,36 @@ La feuille entre depuis le bas avec un arrière-plan flouté. La confirmation ta
 Mon compte présente la carte d’abonné, Gérer mon compte et Paramètres. Les billets sont accessibles depuis l’onglet Billets. La gestion du compte permet de modifier le nom affiché et une adresse e-mail facultative, conservés localement pour la démonstration. Le nom est repris sur la carte d’abonné et dans la simulation Apple Pay. Le résumé des paramètres présente leur portée, « Apparence, vidéo et gestes ».
 
 L’entrée Mes avis de Mon compte regroupe les contributions locales par film, avec affiche, date, note et commentaire. Modifier ouvre un formulaire permettant d’ajuster les étoiles et le texte. Supprimer retire l’avis et actualise les moyennes affichées dans le catalogue et les fiches. Les avis fictifs de démonstration restent dans les fiches. Un état vide permet de revenir à la découverte des films.
+
+Les billets confirmés affichent un QR code de démonstration généré localement et une référence unique. Le code encode cette référence et disparaît du billet après son annulation. Le rendu conserve une marge blanche pour permettre la lecture dans les deux thèmes.
+
+Sur ordinateur, dès 1 000 px, les destinations À l’affiche, Billets et Compte sont intégrées à la barre de titre. Sous ce seuil, la navigation revient en bas de l’écran.
+
+
+### Accessibilité de la salle et réservations multiples
+
+Le plan comporte deux emplacements PMR, A1 et A8, repérés par un pictogramme de fauteuil et un contour bleu. La salle 3D représente des espaces libres sans fauteuil de cinéma, avec un fauteuil roulant et une silhouette anonyme lorsque l’emplacement est occupé. La mention PMR accompagne le siège dans le récapitulatif, le paiement et le billet.
+
+Depuis un siège, le regard reste autour de l’écran : environ ±25° horizontalement et ±12° verticalement. Le point de vue ne se déplace pas dans la salle. Choisir un autre siège recentre le regard.
+
+Si un billet confirmé existe déjà, une confirmation propose d’ajouter une réservation. Refuser conserve la fiche et les billets existants. Accepter ouvre le choix des sièges, puis le paiement habituel. Chaque réservation conserve son billet et son QR code, et peut être annulée indépendamment après confirmation. Un siège déjà réservé pour la même séance reste indisponible dans le plan et en 3D.
+
+
+### Apple Pay et Google Pay selon le format
+
+Les deux moyens de paiement sont proposés au même niveau sur la page de paiement. Les parcours restent entièrement simulés : aucune carte ni connexion de portefeuille réelle n’est demandée.
+
+Sur téléphone, Apple Pay présente une feuille depuis le bas, avec confirmation Face ID simulée. Google Pay utilise sa propre feuille, son identité visuelle et un choix entre deux cartes fictives. Le total et l’action de paiement restent accessibles en bas, même lorsque le contenu défile.
+
+À partir de 700 px, les portefeuilles deviennent des fenêtres centrées, avec apparition et fermeture par fondu et légère transformation. Apple Pay propose une confirmation simulée sur un appareil Apple, sans Face ID ni bouton latéral de téléphone. Google Pay présente le total et la validation côte à côte. Les styles et les indications de confirmation Apple Pay s’adaptent également au redimensionnement.
+
+Les états de traitement, refus, nouvelle tentative et succès possèdent leurs animations. Fermer une fenêtre pendant le traitement annule le paiement simulé, conserve les sièges et empêche la création d’un billet. Un paiement réussi rejoint le même parcours de création du billet et de son QR code, quel que soit le portefeuille choisi. La préférence de réduction des animations est respectée.
+
+Références visuelles : [Apple Pay — Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/apple-pay/) et [Google Pay — Brand guidelines](https://developers.google.com/pay/api/web/guides/brand-guidelines).
+
+
+### Barre de réservation sur la fiche
+
+Le bouton fixe conserve une marge avec les bords de l’écran et repose dans un panneau de verre arrondi. Sur tablette, le panneau suit la largeur du contenu de la fiche ; en bureau à deux colonnes, il reste dans la colonne des séances. La hauteur du panneau est mesurée pour réserver l’espace nécessaire à la fin du contenu, y compris si le récapitulatif passe sur plusieurs lignes. Les éléments interactifs ont une marge de défilement qui tient compte de l’en-tête et du panneau fixe.
+
+Sur téléphone, Apple Pay et Google Pay sont affichés côte à côte, avec leurs marques et des libellés accessibles complets. Le récapitulatif mobile est compact pour éviter de repousser le second portefeuille hors de l’écran.

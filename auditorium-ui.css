@@ -182,3 +182,12 @@
 @media (prefers-reduced-transparency:reduce) {
   #booking:has(#auditorium-view:not([hidden])) :is(.seat-picker,.booking-summary) { background:var(--panel); backdrop-filter:none; }
 }
+
+/* Wheelchair bays remain distinct when selected or unavailable. */
+.pmr-icon { width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0; }
+.seat-legend-pmr { display:inline-flex; align-items:center; gap:4px; }
+.seat-row button[data-wheelchair] { border:1.5px solid #79b8cf; border-radius:5px; }
+.seat-row button[data-wheelchair] .pmr-icon { display:block; margin:0 auto; width:16px; height:16px; }
+.seat-row button[data-wheelchair][aria-pressed="true"]::after { display:none; }
+
+.seat-row button[data-wheelchair]:disabled { border-style:dashed; }

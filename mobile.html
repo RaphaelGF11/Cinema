@@ -471,24 +471,31 @@ header:has(.page-back:not([hidden])) .brand { display:none; }
 .detail-rating { color:#fff9eb; font-size:12px; margin:12px 0 0; }
 .detail-rating a { color:inherit; text-decoration:none; min-height:44px; display:inline-flex; align-items:center; }
 .reservation-bar {
-  position:fixed; z-index:5; bottom:0; left:50%; translate:-50% 0;
-  width:min(100%,480px); padding:14px 18px calc(14px + env(safe-area-inset-bottom));
-  color:var(--ink); background:linear-gradient(155deg,var(--glass),var(--panel));
-  backdrop-filter:blur(20px) saturate(140%); border-top:1px solid var(--line);
-  box-shadow:0 -8px 30px #100d0c30;
+  position:fixed; z-index:5; bottom:calc(12px + env(safe-area-inset-bottom)); left:50%; translate:-50% 0;
+  width:min(calc(100% - 24px),480px); padding:14px 18px;
+  color:var(--ink); background:linear-gradient(155deg,var(--glass),color-mix(in srgb,var(--panel) 88%,transparent));
+  backdrop-filter:blur(24px) saturate(140%); border:1px solid color-mix(in srgb,var(--line) 70%,transparent);
+  border-radius:24px; box-shadow:0 8px 32px #100d0c40;
 }
 #reservation-summary { font-size:14px; margin:0 0 10px; }
 #reserve-session { width:100%; min-height:50px; display:flex; align-items:center; justify-content:center; gap:10px; }
 .reservation-hint { text-align:center; font-size:13px; margin:8px 0 0; }
 .reservation-hint span { display:inline-block; animation:reserve-nudge 1.4s ease-in-out 4; }
 @keyframes reserve-nudge { 0%,100% { transform:translateY(2px); } 50% { transform:translateY(-3px); } }
-#detail.has-reservation { padding-bottom:calc(170px + env(safe-area-inset-bottom)); }
-#cancel-confirmation {
+#detail.has-reservation > .detail-copy {
+  padding-bottom:calc(var(--reservation-height,150px) + 40px + env(safe-area-inset-bottom));
+}
+#detail :is(h2,h3,button,input,textarea,a) { scroll-margin-top:calc(var(--header-height) + 16px); }
+#detail.has-reservation :is(button,input,textarea,a) { scroll-margin-bottom:calc(var(--reservation-height,150px) + 32px + env(safe-area-inset-bottom)); }
+@media (prefers-reduced-transparency:reduce) {
+  .reservation-bar { background:var(--panel); backdrop-filter:none; }
+}
+:is(#cancel-confirmation,#additional-reservation) {
   width:min(420px,calc(100% - 32px)); padding:24px; border:1px solid var(--line);
   border-radius:24px; background:var(--panel); color:var(--ink);
   box-shadow:0 20px 60px #0005;
 }
-#cancel-confirmation::backdrop { background:#100d0c80; backdrop-filter:blur(6px); }
+:is(#cancel-confirmation,#additional-reservation)::backdrop { background:#100d0c80; backdrop-filter:blur(6px); }
 #cancel-title { font-size:36px; }
 .cancel-actions { display:flex; flex-direction:column; gap:10px; margin-top:22px; }
 #payment { min-height:calc(100svh - var(--header-height)); padding:24px 22px 36px; touch-action:pan-y pinch-zoom; }
@@ -691,6 +698,7 @@ html.is-shared-transition { view-transition-name:none; }
   position:relative; border:1px solid var(--line); border-radius:24px;
   background:var(--panel); box-shadow:0 12px 28px #100d0c24;
 }
+.ticket-card + .ticket-card { margin-top:24px; }
 .ticket-film-info {
   display:flex; align-items:flex-end; gap:16px; min-height:164px; padding:18px;
   border-radius:23px 23px 0 0; color:#fff9eb;
@@ -719,6 +727,11 @@ html.is-shared-transition { view-transition-name:none; }
 }
 .ticket-fields dt { color:var(--muted); font-size:14px; }
 .ticket-fields dd { margin:2px 0 0; font-weight:700; overflow-wrap:anywhere; }
+.ticket-code { margin:24px 0 0; padding-top:22px; border-top:1px solid var(--line); display:flex; flex-direction:column; align-items:center; gap:12px; text-align:center; }
+.ticket-code img { display:block; width:192px; height:192px; max-width:100%; object-fit:contain; background:#fff; border-radius:8px; }
+.ticket-code figcaption { max-width:100%; }
+.ticket-code p { margin:0 0 5px; color:var(--muted); font-size:13px; }
+.ticket-code code { display:block; overflow-wrap:anywhere; color:var(--ink); font:12px/1.5 ui-monospace,monospace; letter-spacing:.03em; }
 .ticket-footer { display:flex; align-items:center; flex-wrap:wrap; gap:8px 16px; margin-top:16px; }
 .ticket-footer small { color:var(--muted); }
 .ticket-footer button { margin-inline-start:auto; }
@@ -834,7 +847,8 @@ html.is-shared-transition { view-transition-name:none; }
 }
 #feedback:empty { margin:0 }
 </style>
-<link rel="stylesheet" href="auditorium-ui.css?v=immersive-seats-8">
+<link rel="stylesheet" href="wallet-payments.css?v=2">
+<link rel="stylesheet" href="auditorium-ui.css?v=immersive-seats-10">
 </head>
 <body>
 <div class="app">
@@ -1101,7 +1115,7 @@ html.is-shared-transition { view-transition-name:none; }
   <div class="seat-picker">
     <div class="seat-picker-head">
       <h3 id="seat-map-title">Plan de salle</h3>
-      <div class="seat-legend"><span>Libre</span><span>✓ Sélectionné</span><span class="seat-legend-occupied">Occupé</span></div>
+      <div class="seat-legend"><span>Libre</span><span>✓ Sélectionné</span><span class="seat-legend-occupied">Occupé</span><span class="seat-legend-pmr"><svg viewBox="0 0 24 24" aria-hidden="true" class="pmr-icon"><circle cx="11" cy="4" r="2"/><path d="M10 8v6h7l3 6M10 10h6M7 11a6 6 0 1 0 8 8"/></svg>Emplacement PMR</span></div>
     </div>
     <div class="seat-map-scroll" role="region" aria-labelledby="seat-map-title">
       <div class="seat-map">
@@ -1136,7 +1150,8 @@ html.is-shared-transition { view-transition-name:none; }
   </dl>
   <div class="payment-method">
     <h3>Comment souhaitez-vous payer ?</h3>
-    <button type="button" class="apple-pay-button" id="apple-pay" aria-label="Payer avec Apple Pay">Payer avec <strong>Apple Pay</strong></button>
+    <div class="payment-wallets"><button type="button" class="apple-pay-button" id="apple-pay" aria-label="Payer avec Apple Pay">Payer avec <strong>Apple Pay</strong></button>
+    <button type="button" id="google-pay" aria-label="Payer avec Google Pay">Payer avec Google Pay</button></div>
     <p class="muted payment-demo">Paiement de démonstration. Aucun débit ne sera effectué.</p>
   </div>
 </section>
@@ -1162,6 +1177,10 @@ html.is-shared-transition { view-transition-name:none; }
         <div><dt>Salle</dt><dd id="ticket-room"></dd></div>
         <div><dt id="ticket-seats-label">Sièges</dt><dd id="ticket-seats"></dd></div>
       </dl>
+      <figure class="ticket-code">
+        <img id="ticket-qr" alt="QR code du billet" width="192" height="192" hidden>
+        <figcaption><p id="ticket-code-status" role="status">Référence du billet</p><code id="ticket-reference"></code></figcaption>
+      </figure>
       <div class="ticket-footer">
         <small>Billet de démonstration</small>
         <button type="button" id="cancel">Annuler la réservation</button>
@@ -1300,6 +1319,7 @@ html.is-shared-transition { view-transition-name:none; }
   <div class="wallet-auth">
     <button type="button" id="apple-pay-confirm" aria-label="Simuler la confirmation Face ID">
       <span class="wallet-face" aria-hidden="true">
+        <svg class="apple-desktop-icon" viewBox="0 0 64 64"><rect x="8" y="7" width="32" height="24" rx="3"/><path d="M3 36h32M20 31v5"/><rect x="37" y="20" width="20" height="36" rx="4"/><path d="M44 50h6m-9-18 5 5 8-9"/></svg>
         <svg class="face-id-icon" viewBox="0 0 64 64"><path d="M20 7h-7a6 6 0 0 0-6 6v7m37-13h7a6 6 0 0 1 6 6v7M7 44v7a6 6 0 0 0 6 6h7m24 0h7a6 6 0 0 0 6-6v-7M22 23v6m20-6v6m-11-7v14h-4m-6 7c6 6 16 6 22 0"/></svg>
         <svg class="wallet-check" viewBox="0 0 64 64"><circle cx="32" cy="32" r="26"/><path d="m20 32 8 8 16-17"/></svg>
         <span class="wallet-spinner"></span><span class="wallet-scan"></span>
@@ -1328,8 +1348,19 @@ html.is-shared-transition { view-transition-name:none; }
     <button value="confirm" class="primary">Confirmer l’annulation</button>
   </form>
 </dialog>
+<dialog id="additional-reservation" aria-labelledby="additional-reservation-title" aria-describedby="additional-reservation-description">
+  <h2 id="additional-reservation-title">Ajouter une réservation ?</h2>
+  <p id="additional-reservation-description">Vous avez déjà une réservation. Souhaitez-vous en ajouter une autre ? Vos billets existants seront conservés.</p>
+  <form method="dialog" class="cancel-actions">
+    <button value="keep" autofocus>Pas maintenant</button>
+    <button value="confirm" class="primary">Ajouter une réservation</button>
+  </form>
+</dialog>
+<script src="vendor/qrcode.js"></script>
+<script src="ticket-qr.js"></script>
+<script src="wallet-payments.js?v=3"></script>
 <script src="film-reviews.js?v=my-reviews-1"></script>
-<script src="auditorium-3d.js?v=immersive-seats-9"></script>
+<script src="auditorium-3d.js?v=immersive-seats-11"></script>
 <script>
 const pageStage = document.querySelector('.app > .page-stage');
 const pageMain = pageStage.querySelector('main');
@@ -2581,8 +2612,10 @@ for (const track of [screeningDays, screeningTimes]) {
   track.addEventListener('scroll', syncArrows, {passive:true});
   new ResizeObserver(syncArrows).observe(track);
 }
-const occupiedSeats = new Set(['A1','A8','B3','B5','B6','C2','C7','D4','D5','E1','E6']);
+const occupiedSeats = new Set(['A1','B3','B5','B6','C2','C7','D4','D5','E1','E6']);
 const seatMap = document.querySelector('#seat-map');
+const wheelchairSeats = new Set(['A1','A8']);
+const formatSeat = id => id + (wheelchairSeats.has(id) ? ' (PMR)' : '');
 const seatLayout = [];
 const seatButtons = new Map();
 const selection = new Set();
@@ -2621,14 +2654,19 @@ for (const [row, letter] of [...'ABCDE'].entries()) {
   for (let number = 1; number <= 8; number++) {
     const id = letter + number;
     const occupied = occupiedSeats.has(id);
-    const seat = {id, row, number, occupied};
+    const wheelchair = wheelchairSeats.has(id);
+    const seat = {id, row, number, occupied, wheelchair};
     seatLayout.push(seat);
     const button = document.createElement('button');
     button.type = 'button';
     button.dataset.seat = id;
     button.textContent = id;
+    if (wheelchair) {
+      button.dataset.wheelchair = '';
+      button.insertAdjacentHTML('afterbegin', '<svg viewBox="0 0 24 24" aria-hidden="true" class="pmr-icon"><circle cx="11" cy="4" r="2"/><path d="M10 8v6h7l3 6M10 10h6M7 11a6 6 0 1 0 8 8"/></svg>');
+    }
     button.disabled = occupied;
-    button.setAttribute('aria-label', occupied ? id + ', occupé' : id);
+    button.setAttribute('aria-label', formatSeat(id) + (occupied ? ', occupé' : ''));
     if (occupied) button.dataset.occupied = '';
     else button.setAttribute('aria-pressed', 'false');
     button.addEventListener('click', () => toggleSeat(id));
@@ -2641,7 +2679,7 @@ for (const [row, letter] of [...'ABCDE'].entries()) {
 function showAuditoriumCamera(seat) {
   viewedSeat = seat;
   auditoriumView.dataset.camera = seat ? 'seat' : 'overview';
-  auditoriumCaption.textContent = seat ? 'Vue depuis ' + seat : 'Vue d’ensemble';
+  auditoriumCaption.textContent = seat ? 'Vue depuis ' + formatSeat(seat) : 'Vue d’ensemble';
   auditoriumLookHint.hidden = !seat;
   auditoriumCanvas.setAttribute('aria-hidden', String(!seat));
   if (seat) auditoriumCanvas.tabIndex = 0;
@@ -2697,32 +2735,47 @@ function openAuditorium() {
   bookingMedia.classList.add('projection-video');
   moveFilmVideo(bookingMedia, auditoriumView);
   bookingWantsPlayback = autoplayAllowed();
+  auditorium.setOccupied(seatLayout.filter(seat => seatUnavailable(seat.id)).map(seat => seat.id));
   auditorium.setVideo(bookingMedia);
   auditorium.activate();
   auditorium.setSelection([...selection]);
   showAuditoriumCamera(viewedSeat);
 }
 
+function screeningKey(film = selectedScreeningFilm, session = selectedSession, day = bookedDay) {
+  return film && session ? [film.querySelector('.film-poster').getAttribute('src'), day, session.dataset.time, session.dataset.room].join('|') : '';
+}
+function seatUnavailable(id) {
+  if (occupiedSeats.has(id)) return true;
+  const key = screeningKey();
+  return [...document.querySelectorAll('.ticket-card[data-status="confirmed"]')].some(card =>
+    card.dataset.screening === key && JSON.parse(card.dataset.seats || '[]').includes(id));
+}
+
 function updateSeatSelection() {
   for (const [id, button] of seatButtons) {
-    if (!occupiedSeats.has(id)) {
-      button.disabled = ticketActive;
+    {
+      const unavailable = seatUnavailable(id);
+      button.disabled = ticketActive || unavailable;
+      button.toggleAttribute('data-occupied', unavailable);
+      button.setAttribute('aria-label', formatSeat(id) + (unavailable ? ', occupé' : ''));
       button.setAttribute('aria-pressed', selection.has(id));
     }
   }
   const count = selection.size;
   total.textContent = count + (count > 1 ? ' places' : ' place') + ' · ' + count * pricePerSeat + ' €';
   const selectedIds = [...selection].sort();
-  const visibleIds = selectedIds.slice(0, 3).join(' · ');
+  const visibleIds = selectedIds.slice(0, 3).map(formatSeat).join(' · ');
   document.querySelector('#booking-selection').textContent = count > 3
     ? visibleIds + ' · +' + (count - 3)
     : visibleIds || '12 € par place';
   pay.disabled = count === 0 || ticketActive;
+  auditorium?.setOccupied(seatLayout.filter(seat => seatUnavailable(seat.id)).map(seat => seat.id));
   auditorium?.setSelection([...selection]);
 }
 
 function toggleSeat(id) {
-  if (ticketActive || !seatButtons.has(id) || occupiedSeats.has(id)) return;
+  if (ticketActive || !seatButtons.has(id) || seatUnavailable(id)) return;
   if (selection.has(id)) {
     selection.delete(id);
     if (viewedSeat === id) showAuditoriumCamera([...selection].at(-1));
@@ -2736,6 +2789,10 @@ function toggleSeat(id) {
 
 const reservationBar = document.querySelector('#reservation-bar');
 const reserveSession = document.querySelector('#reserve-session');
+new ResizeObserver(entries => {
+  const height = entries[0].borderBoxSize?.[0]?.blockSize || reservationBar.offsetHeight;
+  if (height > 0) document.querySelector('#detail').style.setProperty('--reservation-height', height + 'px');
+}).observe(reservationBar);
 const sessionButtons = [...document.querySelectorAll('[data-time][data-room]')];
 let pendingSession;
 let pendingSessionFilm;
@@ -2765,12 +2822,20 @@ for (const session of sessionButtons) {
       {duration:280,easing:'cubic-bezier(.22,1,.36,1)'});
   });
 }
-reserveSession.addEventListener('click', () => {
+reserveSession.addEventListener('click', async () => {
     if (!pendingSession || pendingSessionFilm !== detailSlide || pendingSessionDay !== selectedDay) return;
     const session = pendingSession;
+    if (document.querySelector('.ticket-card[data-status="confirmed"]')) {
+      const prompt = document.querySelector('#additional-reservation');
+      if (prompt.open) return;
+      prompt.returnValue = 'keep';
+      const confirmed = new Promise(resolve => prompt.addEventListener('close', () => resolve(prompt.returnValue === 'confirm'), {once:true}));
+      prompt.showModal();
+      if (!await confirmed) return;
+    }
     if (ticketActive) {
-      navigateView('tickets');
-      return;
+      ticketActive = false;
+      selectedSession = undefined;
     }
     if (selectedSession !== session || selectedScreeningFilm !== detailSlide || bookedDay !== selectedDay) {
       selectedSession = session;
@@ -2796,8 +2861,21 @@ pay.addEventListener('click', () => {
 function confirmTicket() {
   if (ticketActive || selection.size === 0 || !selectedSession) return;
   feedback.textContent = '';
-  ticketActive = true;
   const ticket = document.querySelector('#ticket');
+  if (!ticket.hidden) {
+    const archived = ticket.cloneNode(true);
+    for (const element of [archived, ...archived.querySelectorAll('[id]')]) {
+      if (element.id) element.dataset.ticketField = element.id;
+      element.removeAttribute('id');
+      element.removeAttribute('aria-labelledby');
+    }
+    archived.setAttribute('aria-label', archived.querySelector('[data-ticket-field="ticket-film"]').textContent);
+    ticket.after(archived);
+  }
+  window.CinemaTicketCode.issue();
+  ticketActive = true;
+  ticket.dataset.screening = screeningKey();
+  ticket.dataset.seats = JSON.stringify([...selection]);
   const poster = selectedScreeningFilm.querySelector('.film-poster').getAttribute('src');
   document.querySelector('#ticket-poster').src = poster;
   ticket.style.setProperty('--ticket-poster', `url("${poster}")`);
@@ -2809,7 +2887,7 @@ function confirmTicket() {
   ticketStatus.textContent = 'Billet confirmé';
   cancelTicket.hidden = false;
   document.querySelector('#ticket-seats-label').textContent = selection.size === 1 ? 'Siège' : 'Sièges';
-  document.querySelector('#ticket-seats').textContent = [...selection].sort().join(', ');
+  document.querySelector('#ticket-seats').textContent = [...selection].sort().map(formatSeat).join(', ');
   document.querySelector('#empty').hidden = true;
   ticket.hidden = false;
   updateSeatSelection();
@@ -2824,7 +2902,10 @@ const walletAuthLabel = document.querySelector('#wallet-auth-label');
 const applePayButton = document.querySelector('#apple-pay');
 const applePayMark = document.querySelector('.apple-mark').cloneNode(true);
 applePayMark.setAttribute('aria-hidden','true');
-applePayButton.replaceChildren('Payer avec ', applePayMark, 'Pay');
+const applePayLead = document.createElement('span');
+applePayLead.className = 'wallet-button-lead';
+applePayLead.textContent = 'Payer avec ';
+applePayButton.replaceChildren(applePayLead, applePayMark, 'Pay');
 let paymentTimer;
 let paymentProcessing = false;
 const formatPrice = amount => new Intl.NumberFormat('fr-FR', {style:'currency',currency:'EUR'}).format(amount);
@@ -2834,22 +2915,45 @@ function renderPayment() {
   document.querySelector('#payment-poster').src = selectedScreeningFilm.querySelector('.film-poster').src;
   document.querySelector('#payment-film').textContent = document.querySelector('#booking-film').textContent;
   document.querySelector('#payment-session').textContent = bookingSession.textContent + ' · Salle ' + selectedSession.dataset.room;
-  document.querySelector('#payment-seats').textContent = [...selection].sort().join(', ');
-  document.querySelector('#wallet-seats').textContent = [...selection].sort().join(', ');
+  document.querySelector('#payment-seats').textContent = [...selection].sort().map(formatSeat).join(', ');
+  document.querySelector('#wallet-seats').textContent = [...selection].sort().map(formatSeat).join(', ');
   document.querySelector('#wallet-purchase').textContent = document.querySelector('#booking-film').textContent;
   document.querySelector('#payment-quantity').textContent = selection.size + (selection.size > 1 ? ' places' : ' place') + ' × ' + formatPrice(pricePerSeat);
   const amount = formatPrice(selection.size * pricePerSeat);
   for (const id of ['payment-subtotal','payment-total','apple-pay-total']) document.getElementById(id).textContent = amount;
 }
 
+document.querySelector('#google-pay').addEventListener('click', () => {
+  if (ticketActive || !selection.size || !selectedSession || applePaySheet.open) return;
+  renderPayment();
+  window.CinemaGooglePay.open({
+    name:currentProfile.name,
+    film:document.querySelector('#booking-film').textContent,
+    session:document.querySelector('#payment-session').textContent,
+    seats:[...selection].sort().map(formatSeat).join(', '),
+    total:formatPrice(selection.size * pricePerSeat),
+    declineFirst:!attempted,
+    onDecline:() => { attempted = true; },
+    onSuccess:confirmTicket
+  });
+});
+const walletDesktop = matchMedia('(min-width:700px)');
+function updateApplePayPrompt() {
+  if (applePaySheet.dataset.state !== 'ready') return;
+  applePayFeedback.textContent = walletDesktop.matches
+    ? 'Confirmez sur votre appareil Apple. Simulation sans connexion réelle.'
+    : 'Touchez Face ID pour simuler la confirmation.';
+  walletAuthLabel.textContent = walletDesktop.matches ? 'Confirmer sur mon appareil' : 'Confirmer avec Face ID';
+  applePayConfirm.setAttribute('aria-label', walletDesktop.matches ? 'Simuler la confirmation sur mon appareil Apple' : 'Simuler la confirmation Face ID');
+}
+walletDesktop.addEventListener('change', updateApplePayPrompt);
 document.querySelector('#apple-pay').addEventListener('click', () => {
   if (ticketActive || !selection.size || !selectedSession || applePaySheet.open) return;
   renderPayment();
-  applePayFeedback.textContent = 'Touchez Face ID pour simuler la confirmation.';
-  walletAuthLabel.textContent = 'Confirmer avec Face ID';
-  applePayConfirm.setAttribute('aria-label','Simuler la confirmation Face ID');
+
   applePayConfirm.disabled = false;
   applePaySheet.dataset.state = 'ready';
+  updateApplePayPrompt();
   applePaySheet.classList.remove('is-closing');
   applePaySheet.showModal();
 });
@@ -2881,7 +2985,7 @@ function simulateFaceID() {
   paymentProcessing = true;
   applePayConfirm.disabled = true;
   applePaySheet.dataset.state = 'scanning';
-  walletAuthLabel.textContent = 'Face ID';
+  walletAuthLabel.textContent = walletDesktop.matches ? 'Confirmation sur l’appareil…' : 'Face ID';
   applePayFeedback.textContent = 'Vérification simulée…';
   applePaySheet.setAttribute('aria-busy','true');
   paymentTimer = setTimeout(() => {
@@ -2952,25 +3056,42 @@ document.querySelector('#profile-form').addEventListener('submit', event => {
 });
 
 const cancelConfirmation = document.querySelector('#cancel-confirmation');
-cancelTicket.addEventListener('click', () => {
-  if (!ticketActive) return;
-  document.querySelector('#cancel-description').textContent = document.querySelector('#ticket-film').textContent +
-    ' · ' + document.querySelector('#ticket-day').textContent + ' · ' + document.querySelector('#ticket-time').textContent +
+let cancellationTarget;
+function ticketField(card, id) {
+  return card.querySelector('#' + id + ', [data-ticket-field="' + id + '"]');
+}
+document.querySelector('#tickets').addEventListener('click', event => {
+  const button = event.target.closest('#cancel, [data-ticket-field="cancel"]');
+  if (!button) return;
+  const card = button.closest('.ticket-card');
+  if (card.dataset.status !== 'confirmed') return;
+  cancellationTarget = card;
+  document.querySelector('#cancel-description').textContent = ticketField(card, 'ticket-film').textContent +
+    ' · ' + ticketField(card, 'ticket-day').textContent + ' · ' + ticketField(card, 'ticket-time').textContent +
     '. Les sièges de cette réservation seront libérés.';
   cancelConfirmation.returnValue = 'keep';
   cancelConfirmation.showModal();
 });
 cancelConfirmation.addEventListener('close', () => {
-  if (cancelConfirmation.returnValue !== 'confirm' || !ticketActive) return;
-  ticketActive = false;
-  selectedSession = undefined;
-  document.querySelector('#ticket').dataset.status = 'cancelled';
-  ticketStatus.textContent = 'Billet annulé';
-  ticketStatus.tabIndex = -1;
-  ticketStatus.focus();
-  cancelTicket.hidden = true;
-  clearPendingSession();
-  pay.textContent = 'Billet annulé';
+  const card = cancellationTarget;
+  cancellationTarget = undefined;
+  if (cancelConfirmation.returnValue !== 'confirm' || card?.dataset.status !== 'confirmed') return;
+  card.dataset.status = 'cancelled';
+  const status = ticketField(card, 'ticket-status');
+  status.textContent = 'Billet annulé';
+  status.tabIndex = -1;
+  status.focus();
+  ticketField(card, 'cancel').hidden = true;
+  const qr = ticketField(card, 'ticket-qr');
+  qr.hidden = true;
+  qr.removeAttribute('src');
+  ticketField(card, 'ticket-code-status').textContent = 'Billet annulé · QR code indisponible';
+  if (card.id === 'ticket' && ticketActive) {
+    ticketActive = false;
+    selection.clear();
+    pay.textContent = 'Continuer';
+  }
+  updateSeatSelection();
 });
 </script>
 </body>
