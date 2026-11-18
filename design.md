@@ -12,7 +12,7 @@ Le cadrage conserve la projectionniste sur la droite sur grand écran. Sur mobil
 
 ## Matière et hiérarchie
 
-Le fond et les panneaux de contenu sont opaques. Les films apportent la couleur et la profondeur. Le verre forme la couche des commandes flottantes, comme la barre de navigation ou le récapitulatif. Utiliser une seule surface vitrée par groupe de commandes, avec un contour de 1 px qui suit son rayon. Le reflet part du coin supérieur gauche, s’atténue vers le bas et reste cantonné au bord. Une ombre courte détache la commande du fond. Le contour uni sert de repli si le masque CSS est indisponible. En mode de couleurs forcées, le contour prend la couleur du texte système.
+Le fond et les panneaux de contenu sont opaques. Les films apportent la couleur et la profondeur. Le verre forme la couche des commandes flottantes, comme la barre de navigation ou le récapitulatif. Utiliser une seule surface vitrée par groupe de commandes, avec un contour de 0,75 px qui suit son rayon. Le reflet part du coin supérieur gauche, s’atténue vers le bas et reste cantonné au bord. Une ombre courte détache la commande du fond. Le contour uni sert de repli si le masque CSS est indisponible. En mode de couleurs forcées, le contour prend la couleur du texte système.
 
 Le verre standard est le réglage courant. La variante claire augmente la transparence au-dessus d’un visuel et applique un voile de 20 % adapté au thème. La variante opaque sert de repli et de mode de comparaison. Vérifier le contraste sur chaque image. Cette adaptation web utilise le flou d’arrière-plan et une teinte CSS. [Apple Human Interface Guidelines — Materials](https://developer.apple.com/design/human-interface-guidelines/materials)
 
@@ -34,13 +34,13 @@ Le verre standard est le réglage courant. La variante claire augmente la transp
 | `--success` | `#215a3a` | `#a4e5be` | Confirmation |
 | `--line` | `#8d695c` | `#a18d7c` | Contours des commandes et de l’onglet actif |
 | `--panel-line` | `#c9ad96` | `#56473c` | Contours des panneaux et des nuanciers |
-| `--glass` | `rgb(245 235 215 / 52%)` | `rgb(41 35 32 / 52%)` | Verre standard |
-| `--glass-clear` | `rgb(245 235 215 / 30%)` | `rgb(41 35 32 / 30%)` | Verre plus transparent |
+| `--glass` | `rgb(245 235 215 / 42%)` | `rgb(41 35 32 / 34%)` | Verre standard |
+| `--glass-clear` | `rgb(245 235 215 / 26%)` | `rgb(41 35 32 / 22%)` | Verre plus transparent |
 | `--veil` | `rgb(255 249 235 / 20%)` | `rgb(0 0 0 / 20%)` | Voile du visuel sous le verre clair |
-| `--rim` | `rgb(101 72 61 / 33%)` | `rgb(255 249 235 / 32%)` | Contour intermédiaire et repli uni |
-| `--rim-light` | `rgb(255 255 255 / 96%)` | `rgb(255 249 235 / 74%)` | Reflet en haut à gauche |
-| `--rim-shade` | `rgb(101 72 61 / 20%)` | `rgb(255 249 235 / 13%)` | Partie basse du contour |
-| `--glass-shadow` | `rgb(56 34 22 / 16%)` | `rgb(9 6 4 / 29%)` | Ombre sous le verre |
+| `--rim` | `rgb(101 72 61 / 17%)` | `rgb(255 249 235 / 15%)` | Contour intermédiaire et repli uni |
+| `--rim-light` | `rgb(255 255 255 / 46%)` | `rgb(255 249 235 / 28%)` | Reflet en haut à gauche |
+| `--rim-shade` | `rgb(101 72 61 / 9%)` | `rgb(255 249 235 / 7%)` | Partie basse du contour |
+| `--glass-shadow` | `rgb(56 34 22 / 10%)` | `rgb(9 6 4 / 14%)` | Ombre sous le verre |
 
 Les deux thèmes partagent un flou de 12 px (`--blur`), un rayon de 24 px pour les panneaux (`--radius`) et une transition de 180 ms (`--motion`).
 
@@ -156,3 +156,8 @@ Références visuelles : [Apple Pay — Human Interface Guidelines](https://deve
 Le bouton fixe conserve une marge avec les bords de l’écran et repose dans un panneau de verre arrondi. Sur tablette, le panneau suit la largeur du contenu de la fiche ; en bureau à deux colonnes, il reste dans la colonne des séances. La hauteur du panneau est mesurée pour réserver l’espace nécessaire à la fin du contenu, y compris si le récapitulatif passe sur plusieurs lignes. Les éléments interactifs ont une marge de défilement qui tient compte de l’en-tête et du panneau fixe.
 
 Sur téléphone, Apple Pay et Google Pay sont affichés côte à côte, avec leurs marques et des libellés accessibles complets. Le récapitulatif mobile est compact pour éviter de repousser le second portefeuille hors de l’écran.
+
+
+### Verre allégé
+
+Les commandes flottantes utilisent des bordures décoratives de 0,75 px : 15 % d’opacité en sombre, 17 % en clair. Le reflet supérieur reste discret, à 28 % en sombre et 46 % en clair. La teinte du verre standard passe à 34 % en sombre et 42 % en clair. Les ombres sont plus courtes et moins denses, et l’onglet actif n’empile plus un fond opaque et un reflet intérieur. Les panneaux du plan 3D et le récapitulatif de réservation partagent cette matière plus légère. Les contours fonctionnels, les états sélectionnés, les indicateurs de focus et les surfaces opaques de repli restent distincts des bordures décoratives.

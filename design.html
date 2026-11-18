@@ -13,10 +13,10 @@
   --canvas:#171412; --surface:#292320; --decor:#703029; --signal:#e63929;
   --ink:#fff9eb; --muted:#d8c9b6; --accent:#e63929; --on-accent:#120c09;
   --danger:#ffabb9; --success:#a4e5be; --line:#a18d7c;
-  --glass:rgb(41 35 32 / 52%); --glass-clear:rgb(41 35 32 / 30%);
-  --veil:rgb(0 0 0 / 20%); --rim:rgb(255 249 235 / 32%);
-  --rim-light:rgb(255 249 235 / 74%); --rim-shade:rgb(255 249 235 / 13%);
-  --glass-shadow:rgb(9 6 4 / 29%);
+  --glass:rgb(41 35 32 / 34%); --glass-clear:rgb(41 35 32 / 22%);
+  --veil:rgb(0 0 0 / 20%); --rim:rgb(255 249 235 / 15%);
+  --rim-light:rgb(255 249 235 / 28%); --rim-shade:rgb(255 249 235 / 7%);
+  --glass-shadow:rgb(9 6 4 / 14%);
   --panel-line:#56473c;
   --blur:12px; --radius:24px; --motion:180ms;
   --display:"Instrument Serif", Georgia, serif;
@@ -26,10 +26,10 @@ html[data-theme="light"] {
   --canvas:#fff9eb; --surface:#f5ebd7; --decor:#e63929; --signal:#e63929;
   --ink:#241714; --muted:#65483d; --accent:#b51c18; --on-accent:#ffffff;
   --danger:#9f1524; --success:#215a3a; --line:#8d695c;
-  --glass:rgb(245 235 215 / 52%); --glass-clear:rgb(245 235 215 / 30%);
-  --veil:rgb(255 249 235 / 20%); --rim:rgb(101 72 61 / 33%);
-  --rim-light:rgb(255 255 255 / 96%); --rim-shade:rgb(101 72 61 / 20%);
-  --glass-shadow:rgb(56 34 22 / 16%);
+  --glass:rgb(245 235 215 / 42%); --glass-clear:rgb(245 235 215 / 26%);
+  --veil:rgb(255 249 235 / 20%); --rim:rgb(101 72 61 / 17%);
+  --rim-light:rgb(255 255 255 / 46%); --rim-shade:rgb(101 72 61 / 9%);
+  --glass-shadow:rgb(56 34 22 / 10%);
   --panel-line:#c9ad96;
 }
 * { box-sizing:border-box; }
@@ -82,16 +82,16 @@ h1 em { display:block; color:#ffd3bd; }
 .glass {
   position:relative;
   background:var(--surface);
-  border:1px solid var(--rim);
-  box-shadow:0 8px 20px var(--glass-shadow);
+  border:.75px solid var(--rim);
+  box-shadow:0 5px 14px var(--glass-shadow);
 }
 @supports (mask-composite:exclude) {
   .glass { border-color:transparent; }
   .glass::before {
     content:"";
     position:absolute;
-    inset:-1px;
-    padding:1px;
+    inset:-.75px;
+    padding:.75px;
     border-radius:inherit;
     pointer-events:none;
     background:linear-gradient(151deg,var(--rim-light),var(--rim) 34%,var(--rim-shade) 70%,var(--rim) 100%);

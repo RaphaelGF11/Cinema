@@ -45,10 +45,10 @@
 #booking:has(canvas[data-pointer-lock="unavailable"]) #auditorium-look-hint > .look-unavailable { display:inline; }
 .auditorium-caption button {
   min-height:44px; padding:7px 11px; color:#fff9eb; background:#2a171bef;
-  border-color:#d18468; font-size:14px; pointer-events:auto;
+  border-color:#d1846840; font-size:14px; pointer-events:auto;
 }
 @supports (backdrop-filter:blur(8px)) {
-  .auditorium-caption button { background:#2a171bcc; backdrop-filter:blur(8px); }
+  .auditorium-caption button { background:#2a171b66; backdrop-filter:blur(8px); }
 }
 @media (prefers-reduced-transparency:reduce) {
   .auditorium-caption button { background:#2a171b; backdrop-filter:none; }
@@ -146,8 +146,8 @@
 #booking:has(#auditorium-view:not([hidden])) .seat-picker {
   grid-row:3; display:flex; flex-direction:column;
   margin:0 12px; padding:12px 10px 6px; color:var(--ink);
-  background:linear-gradient(145deg,color-mix(in srgb,var(--panel) 78%,transparent),color-mix(in srgb,var(--bg) 62%,transparent));
-  backdrop-filter:blur(18px) saturate(130%); box-shadow:0 12px 32px #0004;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--panel) 52%,transparent),color-mix(in srgb,var(--bg) 38%,transparent));
+  border:.75px solid var(--glass-edge); backdrop-filter:blur(14px) saturate(125%); box-shadow:0 6px 22px #0002;
 }
 #booking:has(#auditorium-view:not([hidden])) .seat-map-scroll { flex:none; overflow:visible; }
 #booking:has(#auditorium-view:not([hidden])) .seat-picker-head { flex:none; }
@@ -155,8 +155,8 @@
 #booking:has(#auditorium-view:not([hidden])) .seat-legend { font-size:12px; }
 #booking:has(#auditorium-view:not([hidden])) .booking-summary {
   grid-row:4; position:relative; bottom:auto; min-width:0; margin:0; padding-top:10px;
-  background:linear-gradient(180deg,color-mix(in srgb,var(--panel) 75%,transparent),color-mix(in srgb,var(--bg) 88%,transparent));
-  backdrop-filter:blur(18px) saturate(130%); color:var(--ink);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--panel) 46%,transparent),color-mix(in srgb,var(--bg) 56%,transparent));
+  border-color:var(--glass-edge); backdrop-filter:blur(14px) saturate(125%); color:var(--ink);
 }
 #booking :is(.seat-picker,.booking-heading,.booking-summary,.auditorium-toolbar) {
   transition:opacity 180ms ease,translate 180ms ease;
